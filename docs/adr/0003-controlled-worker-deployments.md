@@ -31,7 +31,9 @@ Production traffic changes remain explicit human commands using exact Worker ver
 
 Before promotion, the candidate is placed in the deployment at 0% and tested through the production route with the `Cloudflare-Workers-Version-Overrides` request header. The smoke script requires an expected service version whenever a version override is used.
 
-Rollback always names the exact known-good Worker version ID.
+Rollback or failback always names the exact known-good Worker version ID.
+
+Post-promotion and post-failback verification requires sustained public version convergence rather than a single matching response. Deployment state and one successful probe are not sufficient evidence of request-path stability.
 
 ## Consequences
 
@@ -44,6 +46,8 @@ Candidate validation does not require enabling public preview URLs.
 The process adds one explicit 0% staging deployment before promotion. This is deliberate because the deployment now carries both the known-good and candidate version IDs needed for targeted version-override testing.
 
 The human operator must record exact version IDs and perform promotion or rollback explicitly.
+
+Release publication waits for a bounded run of consecutive version-consistent probes, the complete ordinary production smoke suite, and a final stability window. A reappearance of the previous version resets convergence evidence.
 
 ## Rejected alternatives
 

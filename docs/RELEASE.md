@@ -16,10 +16,12 @@
 14. Run the ordinary production smoke suite and prove the known-good version remains healthy before promotion.
 15. Cross the human promotion gate only after candidate smoke, production smoke, CI, security audit, and rollback readiness all pass.
 16. Promote the exact candidate Worker version to 100% using `wrangler versions deploy` as an explicit operator command.
-17. Wait for production version convergence and run the complete smoke suite without a version override.
-18. If production verification fails, roll back to the exact recorded known-good Worker version before debugging forward.
-19. Verify branch protection, repository cleanliness, release/tag signatures, open PRs, remote branches, code-scanning alerts, and Dependabot absence.
-20. Record the final release anchor, Worker version ID, deployment state, and rollback anchor.
+17. After promotion, confirm deployment state is the exact candidate at 100%, then require sustained public convergence. Use unique probe URLs or equivalent cache-busting and no-cache request headers. At minimum, require 10 consecutive paired observations where `/v1/health` reports the expected `meta.service_version` and `/openapi.json` reports the expected `info.version`. Reset the streak on any mismatch.
+18. Run the complete ordinary production smoke suite without a version override only after sustained convergence passes, then require at least 10 additional health-version samples with no regression to the previous release.
+19. Treat any reappearance of the old version as incomplete convergence. Continue only within a bounded verification window; if sustained stability cannot be established or any non-transient production check fails, restore the exact known-good Worker version before debugging forward.
+20. Publish the GitHub release only after sustained convergence, the full production smoke suite, and the final stability window pass.
+21. Verify branch protection, repository cleanliness, release/tag signatures, open PRs, remote branches, code-scanning alerts, private vulnerability reporting, and Dependabot absence.
+22. Record the final release anchor, Worker version ID, deployment state, rollback anchor, production service version, and release URL.
 
 The repository intentionally has no direct production `deploy` package script. Candidate upload and production promotion are separate operations. V1 does not store a long-lived Cloudflare deployment credential in GitHub Actions.
 

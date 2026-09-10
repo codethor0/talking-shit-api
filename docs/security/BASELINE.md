@@ -1,6 +1,6 @@
 # Security Baseline
 
-Baseline established against Talking Shit API v0.6.0.
+Baseline reviewed against Talking Shit API v0.6.1.
 
 ## Runtime capability baseline
 
@@ -64,7 +64,10 @@ The release path must retain:
 - targeted candidate smoke through a version override while preview URLs remain disabled;
 - an expected service-version assertion during version-override smoke;
 - explicit human promotion using the exact candidate Worker version ID;
-- exact-ID rollback readiness before promotion;
+- sustained multi-sample public version convergence after production traffic changes;
+- a full ordinary production smoke only after sustained convergence passes;
+- a final post-smoke stability window that fails on any reappearance of the previous service version;
+- exact-ID non-interactive failback readiness before promotion;
 - no long-lived Cloudflare deployment credential in GitHub Actions.
 
 Package scripts must not contain production traffic-shifting `wrangler deploy`, `wrangler versions deploy`, `wrangler rollback`, or `wrangler triggers deploy` commands. Production promotion and rollback remain explicit operator actions.
@@ -80,7 +83,7 @@ Do not release when any of the following is true:
 - a new capability lacks its required security review;
 - the Worker configuration differs from the documented privacy baseline;
 - release or rollback state cannot be identified;
-- production smoke or semantic checks fail.
+- sustained production convergence, smoke, stability, or semantic checks fail.
 
 ## Required proof
 
@@ -93,4 +96,4 @@ npm audit signatures
 git diff --check
 ```
 
-The release process must also verify commit signatures, tag signatures, exact PR file boundaries, branch protection, production version convergence, production semantic behavior, and rollback readiness.
+The release process must also verify commit signatures, tag signatures, exact PR file boundaries, branch protection, sustained production version convergence, production semantic behavior, final stability sampling, and exact-ID failback readiness.

@@ -5,7 +5,7 @@ Talking Shit API separates Worker version creation from production traffic chang
 The deployment invariant is:
 
 ```text
-VERIFY -> SNAPSHOT -> UPLOAD -> IDENTIFY -> STAGE AT 0% -> TARGETED SMOKE -> HUMAN GATE -> PROMOTE -> VERIFY -> RECORD
+VERIFY -> SNAPSHOT -> UPLOAD -> IDENTIFY -> STAGE AT 0% -> TARGETED SMOKE -> HUMAN GATE -> PROMOTE -> SUSTAINED VERIFY -> RECORD
 ```
 
 Direct `wrangler deploy` is not part of the release path because it creates a version and immediately sends 100% of production traffic to it.
@@ -21,7 +21,8 @@ The deployment process must preserve these properties:
 - the candidate receives 0% of normal traffic during targeted smoke testing;
 - targeted smoke uses Cloudflare Worker version overrides;
 - promotion requires an explicit human action and the exact candidate version ID;
-- rollback requires an explicit known-good version ID;
+- rollback or failback requires an explicit known-good version ID;
+- release publication requires sustained public version convergence, full production smoke, and a final stability window;
 - GitHub Actions does not hold a long-lived Cloudflare deployment credential;
 - no script silently promotes or rolls back production traffic.
 
@@ -79,7 +80,7 @@ npm run candidate:upload -- \
 Immediately run:
 
 ```bash
-npx wrangler versions list --json
+npx --no-install wrangler versions list --json
 ```
 
 Identify the new version by its exact tag/message and record its Worker version ID. Do not select a candidate only because it is the newest entry.
@@ -96,7 +97,7 @@ CANDIDATE_VERSION_ID="<candidate-worker-version-id>"
 Create a deployment containing the known-good version at 100% and the candidate at 0%:
 
 ```bash
-npx wrangler versions deploy \
+npx --no-install wrangler versions deploy \
   "${KNOWN_GOOD_VERSION_ID}@100%" \
   "${CANDIDATE_VERSION_ID}@0%" \
   -y \
@@ -108,7 +109,7 @@ This changes deployment metadata but does not intentionally route normal product
 Confirm the deployment contains exactly the expected version IDs and percentages:
 
 ```bash
-npx wrangler deployments status --json
+npx --no-install wrangler deployments status --json
 ```
 
 Stop on any mismatch.
@@ -156,7 +157,7 @@ rollback command prepared
 Promotion is a separate explicit command:
 
 ```bash
-npx wrangler versions deploy \
+npx --no-install wrangler versions deploy \
   "${CANDIDATE_VERSION_ID}@100%" \
   -y \
   --message "promote reviewed release candidate"
@@ -164,9 +165,20 @@ npx wrangler versions deploy \
 
 No repository package script performs this traffic shift.
 
-## 7. Verify production convergence
+## 7. Verify sustained production convergence
 
-After promotion, confirm the public endpoint reports the expected release version and then run the complete smoke suite without a version override:
+After promotion, first confirm `wrangler deployments status --json` reports exactly the candidate Worker version at 100%.
+
+Do not treat one matching HTTP response or one matching health/OpenAPI pair as proof of convergence. Production verification requires a bounded sustained window:
+
+1. Send unique, cache-busting requests to both `/v1/health` and `/openapi.json`.
+2. Send request headers that disable cache reuse, such as `Cache-Control: no-cache, no-store, max-age=0` and `Pragma: no-cache`.
+3. Require at least 10 consecutive paired observations where `/v1/health` reports the expected `meta.service_version` and `/openapi.json` reports the expected `info.version`.
+4. Reset the consecutive-success streak to zero if either endpoint reports the previous version or any other unexpected version.
+5. After sustained convergence passes, run the complete smoke suite without a Worker version override.
+6. After smoke passes, require at least 10 additional health-version samples with no regression.
+
+Example full-smoke command after the sustained gate:
 
 ```bash
 EXPECTED_SERVICE_VERSION="0.6.1" \
@@ -174,20 +186,37 @@ bash scripts/smoke.sh \
   "https://talking-shit-api.codethor0.workers.dev"
 ```
 
-Record the final Worker version ID and deployment state.
+The expected version above is an example. Use the actual candidate release version.
 
-## 8. Roll back on failure
+Publish the GitHub release only after sustained convergence, the complete production smoke suite, and the final stability window all pass.
 
-If production verification fails, restore the exact recorded known-good Worker version:
+Record the final Worker version ID, deployment state, service version, and release URL.
+
+## 8. Roll back or fail back on failure
+
+If production verification fails, restore the exact recorded known-good Worker version before debugging forward.
+
+For scripted or non-interactive failback, prefer an exact version deployment:
 
 ```bash
-npx wrangler rollback "$KNOWN_GOOD_VERSION_ID" \
+npx --no-install wrangler versions deploy \
+  "${KNOWN_GOOD_VERSION_ID}@100%" \
+  -y \
+  --message "failback: production verification failed"
+```
+
+For an explicit interactive operator rollback, the exact-ID rollback command remains valid:
+
+```bash
+npx --no-install wrangler rollback "$KNOWN_GOOD_VERSION_ID" \
   --message "rollback: production verification failed"
 ```
 
-Then verify the known-good service version and full smoke suite.
+Depending on Wrangler version and terminal context, `wrangler rollback` can still request interactive confirmation. Do not place an interactive rollback command inside an unattended error trap.
 
-Do not debug forward while production remains broken when a safe rollback is available.
+After recovery, confirm deployment state reports exactly the known-good Worker at 100%, require sustained observations of the known-good service version, and run the full smoke suite.
+
+Do not debug forward while production remains broken when a safe failback is available.
 
 ## Why zero-percent staging instead of public preview URLs
 

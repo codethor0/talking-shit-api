@@ -7,37 +7,61 @@ Rollback is the default response to a release-caused production regression. Rest
 Record the current deployment and version information:
 
 ```bash
-npx wrangler deployments status --json
-npx wrangler versions list --json
+npx --no-install wrangler deployments status --json
+npx --no-install wrangler versions list --json
 ```
 
 Identify and retain the exact last known good Worker version ID.
 
 Do not deploy if the previous stable version cannot be identified. Do not rely on `wrangler rollback` without an explicit version ID because Cloudflare can otherwise select the previously uploaded version rather than the reviewed rollback target.
 
-## Roll back
+## Scripted failback
 
-Use the exact last known good version ID:
+For an automated or error-handler recovery path, prefer an exact non-interactive deployment of the known-good version:
 
 ```bash
-npx wrangler rollback <VERSION_ID> --message "rollback: production regression"
+KNOWN_GOOD_VERSION_ID="<known-good-worker-version-id>"
+
+npx --no-install wrangler versions deploy \
+  "${KNOWN_GOOD_VERSION_ID}@100%" \
+  -y \
+  --message "failback: production regression"
 ```
 
-Cloudflare rollback immediately creates a deployment that sends production traffic to the selected prior version. Rollback changes the Worker deployment but does not revert external storage resources or deleted bindings.
+This avoids relying on interactive rollback prompts during unattended recovery.
+
+## Interactive rollback
+
+For an explicit operator-driven rollback, use the exact last known good version ID:
+
+```bash
+npx --no-install wrangler rollback "$KNOWN_GOOD_VERSION_ID" \
+  --message "rollback: production regression"
+```
+
+Depending on Wrangler version and terminal context, the rollback command can still request confirmation. The operator must verify the exact target before accepting the prompt.
+
+Cloudflare rollback or exact-version failback changes the Worker deployment but does not revert external storage resources or deleted bindings.
 
 ## Verify recovery
 
-After rollback, verify:
+First confirm deployment state contains exactly the expected known-good Worker version at 100%:
 
 ```bash
-curl --fail --silent --show-error \
-  https://talking-shit-api.codethor0.workers.dev/v1/health
+npx --no-install wrangler deployments status --json
+```
 
+Then require sustained observations of the expected known-good service version. Do not treat one matching health response as proof that every request path has converged.
+
+After sustained recovery is established, run the full smoke suite:
+
+```bash
+EXPECTED_SERVICE_VERSION="<known-good-service-version>" \
 bash scripts/smoke.sh \
   https://talking-shit-api.codethor0.workers.dev
 ```
 
-Also confirm the reported service version is the expected known-good version.
+Recovery is complete only when the exact deployment state, sustained service-version observations, and the full smoke suite all pass.
 
 ## Security incident exception
 
