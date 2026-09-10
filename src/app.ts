@@ -1,10 +1,10 @@
-import { selectRoast, selectSurpriseRoast } from "./engine";
+import { selectRoast, selectRoasts, selectSurpriseRoast } from "./engine";
 import { headResponse, jsonResponse, optionsResponse } from "./http";
 import { OPENAPI_DOCUMENT } from "./openapi";
 import { enforceRateLimit } from "./rate-limit";
 import { getCatalogStats } from "./stats";
 import { API_VERSION, type AppEnv, CATEGORIES, LEVELS, SERVICE_VERSION } from "./types";
-import { validateRoastRequest } from "./validation";
+import { validateBatchRequest, validateRoastRequest } from "./validation";
 
 const MAX_URL_LENGTH = 2048;
 const ALLOWED_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -13,6 +13,7 @@ const PUBLIC_PATHS = new Set([
   "/v1/health",
   "/v1/categories",
   "/v1/roast",
+  "/v1/batch",
   "/v1/surprise",
   "/v1/stats",
   "/openapi.json",
@@ -88,6 +89,7 @@ async function route(request: Request, env: AppEnv): Promise<Response> {
         description: "Dark developer humor. Tiny API. Boring architecture.",
         endpoints: [
           "/v1/roast",
+          "/v1/batch",
           "/v1/surprise",
           "/v1/stats",
           "/v1/categories",
@@ -105,6 +107,13 @@ async function route(request: Request, env: AppEnv): Promise<Response> {
         return errorResponse(400, validation.code, validation.message);
       }
       return success(selectRoast(validation.category, validation.level));
+    }
+    case "/v1/batch": {
+      const validation = validateBatchRequest(url);
+      if (!validation.ok) {
+        return errorResponse(400, validation.code, validation.message);
+      }
+      return success(selectRoasts(validation.category, validation.level, validation.count));
     }
     case "/v1/surprise":
       if (url.searchParams.size > 0) {

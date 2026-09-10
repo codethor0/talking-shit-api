@@ -1,4 +1,11 @@
-import { CATEGORIES, LEVELS, SERVICE_VERSION } from "./types";
+import {
+  CATEGORIES,
+  DEFAULT_BATCH_COUNT,
+  LEVELS,
+  MAX_BATCH_COUNT,
+  MIN_BATCH_COUNT,
+  SERVICE_VERSION,
+} from "./types";
 
 const sharedFailureResponses = {
   "414": { description: "Request URL is too long" },
@@ -107,6 +114,53 @@ export const OPENAPI_DOCUMENT = {
         summary: "Roast response headers",
         responses: {
           "200": { description: "Roast response headers" },
+          "400": { description: "Invalid query" },
+          ...sharedFailureResponses,
+        },
+      },
+      options: {
+        summary: "CORS preflight",
+        responses: sharedOptionsResponses,
+      },
+    },
+    "/v1/batch": {
+      get: {
+        summary: "Return a bounded batch of unique developer roasts",
+        parameters: [
+          {
+            name: "category",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: CATEGORIES, default: "general" },
+          },
+          {
+            name: "level",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: LEVELS, default: "spicy" },
+          },
+          {
+            name: "count",
+            in: "query",
+            required: false,
+            schema: {
+              type: "integer",
+              minimum: MIN_BATCH_COUNT,
+              maximum: MAX_BATCH_COUNT,
+              default: DEFAULT_BATCH_COUNT,
+            },
+          },
+        ],
+        responses: {
+          "200": { description: "A bounded array of unique roasts" },
+          "400": { description: "Invalid query" },
+          ...sharedFailureResponses,
+        },
+      },
+      head: {
+        summary: "Batch roast response headers",
+        responses: {
+          "200": { description: "Batch roast response headers" },
           "400": { description: "Invalid query" },
           ...sharedFailureResponses,
         },

@@ -17,7 +17,7 @@ V1 stores no user records and has no application secrets.
 
 ### Denial of service / quota exhaustion
 
-Controls: constant-small request work, URL length cap, fixed response catalog, no remote subrequests, one rate-limit bucket per observed client across all public paths, and Cloudflare platform limits.
+Controls: constant-small request work with batch output hard-capped at five roasts, URL length cap, fixed response catalog, no remote subrequests, one rate-limit bucket per observed client across all public paths, and Cloudflare platform limits.
 
 The rate-limit key deliberately does not include the requested path. A client therefore cannot rotate arbitrary paths to create independent application rate buckets.
 

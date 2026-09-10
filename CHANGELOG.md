@@ -5,6 +5,7 @@ Notable project changes are recorded here. The API follows semantic versioning o
 ## Unreleased
 
 - Synchronized README and architecture documentation with the v0.4.0 contract and added a policy guard against category and level documentation drift.
+- Added a bounded `GET /v1/batch` contract for one to five unique roasts from a selected category and intensity.
 
 ## 0.4.0 - 2026-09-10
 

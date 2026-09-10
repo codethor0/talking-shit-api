@@ -3,6 +3,7 @@ import { OPENAPI_DOCUMENT } from "../src/openapi";
 
 type Operation = {
   responses: Record<string, unknown>;
+  parameters?: Array<{ name: string; schema?: Record<string, unknown> }>;
 };
 
 type PublicPath = {
@@ -15,6 +16,7 @@ const paths = OPENAPI_DOCUMENT.paths as unknown as Record<string, PublicPath>;
 const expectedPaths = [
   "/",
   "/openapi.json",
+  "/v1/batch",
   "/v1/categories",
   "/v1/health",
   "/v1/roast",
@@ -48,8 +50,22 @@ describe("OpenAPI contract", () => {
     }
   });
 
+  it("documents bounded batch parameters", () => {
+    const parameters = paths["/v1/batch"]?.get.parameters ?? [];
+    const count = parameters.find((parameter) => parameter.name === "count");
+
+    expect(count?.schema).toMatchObject({
+      type: "integer",
+      minimum: 1,
+      maximum: 5,
+      default: 3,
+    });
+  });
+
   it("documents roast validation and preflight semantics", () => {
     expect(paths["/v1/roast"]?.get.responses).toHaveProperty("400");
+    expect(paths["/v1/batch"]?.get.responses).toHaveProperty("400");
+    expect(paths["/v1/batch"]?.head.responses).toHaveProperty("400");
     expect(paths["/v1/roast"]?.head.responses).toHaveProperty("400");
     expect(paths["/v1/surprise"]?.get.responses).toHaveProperty("400");
     expect(paths["/v1/surprise"]?.head.responses).toHaveProperty("400");
