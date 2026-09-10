@@ -84,4 +84,24 @@ describe("bounded batch endpoint", () => {
     expect(response.status).toBe(400);
     expect(body).not.toContain("target=someone");
   });
+  it("returns a bodyless HEAD response for batch", async () => {
+    const response = await handleRequest(
+      new Request("https://example.com/v1/batch?count=2", { method: "HEAD" }),
+      allowEnv,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("");
+  });
+
+  it("accepts OPTIONS for batch", async () => {
+    const response = await handleRequest(
+      new Request("https://example.com/v1/batch", { method: "OPTIONS" }),
+      allowEnv,
+    );
+
+    expect(response.status).toBe(204);
+    expect(await response.text()).toBe("");
+    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
+  });
 });
