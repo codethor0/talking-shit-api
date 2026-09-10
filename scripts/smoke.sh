@@ -53,6 +53,7 @@ expect_json "health" "/v1/health"
 expect_json "categories" "/v1/categories"
 expect_json "security dark roast" "/v1/roast?category=security&level=dark"
 expect_json "surprise roast" "/v1/surprise"
+expect_json "catalog stats" "/v1/stats"
 expect_status "openapi" 200 -H 'Accept: application/json' "$BASE_URL/openapi.json"
 grep -Fq '"openapi":"3.1.0"' "$TMP/body" || {
   echo "SMOKE: FAIL - OpenAPI version missing" >&2
@@ -64,6 +65,7 @@ echo "===== NEGATIVE CONTRACT ====="
 expect_status "unknown route" 404 "$BASE_URL/not-a-route"
 expect_status "invalid query" 400 "$BASE_URL/v1/roast?wat=nope"
 expect_status "surprise query rejected" 400 "$BASE_URL/v1/surprise?category=code"
+expect_status "stats query rejected" 400 "$BASE_URL/v1/stats?detail=all"
 expect_status "POST rejected" 405 -X POST "$BASE_URL/v1/roast"
 expect_status "unknown OPTIONS" 404 -X OPTIONS "$BASE_URL/not-a-route"
 
