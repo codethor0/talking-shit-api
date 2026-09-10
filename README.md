@@ -22,6 +22,12 @@ Want the API to make every decision:
 curl 'https://talking-shit-api.codethor0.workers.dev/v1/surprise'
 ```
 
+Want randomness within one category or intensity:
+
+```bash
+curl 'https://talking-shit-api.codethor0.workers.dev/v1/surprise?level=dark'
+```
+
 Need a few unique roasts at once:
 
 ```bash
@@ -52,6 +58,7 @@ GET  /v1/categories
 GET  /v1/roast?category=code&level=dark
 GET  /v1/batch?count=3&category=code&level=dark
 GET  /v1/surprise
+GET  /v1/surprise?category=code&level=dark
 GET  /v1/stats
 GET  /openapi.json
 HEAD <same GET routes>
@@ -62,7 +69,7 @@ Categories: `general`, `code`, `debugging`, `deploy`, `meetings`, `security`, `g
 
 Levels: `mild`, `spicy`, `dark`.
 
-Defaults: `general` and `spicy`. Batch count defaults to `3` and is capped at `5`.
+Defaults: `general` and `spicy`. Batch count defaults to `3` and is capped at `5`. Surprise randomizes any omitted category or level.
 
 ## Design
 

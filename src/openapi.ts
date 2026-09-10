@@ -173,10 +173,26 @@ export const OPENAPI_DOCUMENT = {
     },
     "/v1/surprise": {
       get: {
-        summary: "Return a fully random developer roast",
+        summary: "Return a random developer roast with optional constraints",
+        parameters: [
+          {
+            name: "category",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: CATEGORIES },
+          },
+          {
+            name: "level",
+            in: "query",
+            required: false,
+            schema: { type: "string", enum: LEVELS },
+          },
+        ],
         responses: {
-          "200": { description: "A roast with random category and intensity" },
-          "400": { description: "Query parameters are not accepted" },
+          "200": {
+            description: "A roast with randomized unspecified category or intensity",
+          },
+          "400": { description: "Invalid query" },
           ...sharedFailureResponses,
         },
       },
@@ -184,7 +200,7 @@ export const OPENAPI_DOCUMENT = {
         summary: "Random roast response headers",
         responses: {
           "200": { description: "Random roast response headers" },
-          "400": { description: "Query parameters are not accepted" },
+          "400": { description: "Invalid query" },
           ...sharedFailureResponses,
         },
       },
