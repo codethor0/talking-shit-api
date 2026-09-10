@@ -9,6 +9,7 @@ The project protects availability, release integrity, repository integrity, main
 - `BASELINE.md` defines the security controls that must remain true.
 - `OWASP_API_SECURITY.md` maps the current API to OWASP API Security Top 10 (2023).
 - `INCIDENT_RESPONSE.md` defines containment, recovery, and evidence handling.
+- `DEPLOYMENT.md` defines candidate upload, zero-percent validation, human promotion, and production verification.
 - `ROLLBACK.md` defines the Cloudflare rollback procedure.
 - `AVAILABILITY.md` documents failure modes, limits, and residual availability risk.
 

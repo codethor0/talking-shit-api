@@ -4,12 +4,42 @@ set -euo pipefail
 BASE_URL="${1:-}"
 if [[ -z "$BASE_URL" ]]; then
   echo "Usage: $0 https://talking-shit-api.<subdomain>.workers.dev" >&2
+  echo "Optional: WORKER_VERSION_ID=<id> EXPECTED_SERVICE_VERSION=<x.y.z>" >&2
   exit 2
 fi
 
 BASE_URL="${BASE_URL%/}"
+WORKER_VERSION_ID="${WORKER_VERSION_ID:-}"
+EXPECTED_SERVICE_VERSION="${EXPECTED_SERVICE_VERSION:-}"
+
+if [[ -n "$WORKER_VERSION_ID" ]]; then
+  if [[ ! "$WORKER_VERSION_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+    echo "SMOKE: FAIL - WORKER_VERSION_ID must be a Worker version UUID" >&2
+    exit 2
+  fi
+
+  if [[ -z "$EXPECTED_SERVICE_VERSION" ]]; then
+    echo "SMOKE: FAIL - EXPECTED_SERVICE_VERSION is required with WORKER_VERSION_ID" >&2
+    exit 2
+  fi
+fi
+
+if [[ -n "$EXPECTED_SERVICE_VERSION" ]] && [[ ! "$EXPECTED_SERVICE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "SMOKE: FAIL - EXPECTED_SERVICE_VERSION must use x.y.z form" >&2
+  exit 2
+fi
+
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
+
+CURL_COMMON=()
+if [[ -n "$WORKER_VERSION_ID" ]]; then
+  CURL_COMMON+=(
+    -H
+    "Cloudflare-Workers-Version-Overrides: talking-shit-api=\"$WORKER_VERSION_ID\""
+  )
+  echo "SMOKE_TARGET_VERSION=$WORKER_VERSION_ID"
+fi
 
 expect_status() {
   local label="$1"
@@ -22,6 +52,7 @@ expect_status() {
       --output "$TMP/body" \
       --dump-header "$TMP/headers" \
       --write-out '%{http_code}' \
+      "${CURL_COMMON[@]}" \
       "$@"
   )"; then
     echo "SMOKE: FAIL - $label transport error" >&2
@@ -50,6 +81,16 @@ expect_json() {
 echo "===== ROUTES ====="
 expect_json "root" "/"
 expect_json "health" "/v1/health"
+
+if [[ -n "$EXPECTED_SERVICE_VERSION" ]]; then
+  if ! grep -Fq "\"service_version\":\"$EXPECTED_SERVICE_VERSION\"" "$TMP/body"; then
+    echo "SMOKE: FAIL - health did not report expected service version $EXPECTED_SERVICE_VERSION" >&2
+    cat "$TMP/body" >&2
+    exit 1
+  fi
+  echo "PASS expected service version     $EXPECTED_SERVICE_VERSION"
+fi
+
 expect_json "categories" "/v1/categories"
 expect_json "security dark roast" "/v1/roast?category=security&level=dark"
 expect_json "bounded batch" "/v1/batch?count=3&category=git&level=dark"

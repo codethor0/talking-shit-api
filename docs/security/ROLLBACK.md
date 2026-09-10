@@ -7,13 +7,13 @@ Rollback is the default response to a release-caused production regression. Rest
 Record the current deployment and version information:
 
 ```bash
-npx wrangler deployments list
+npx wrangler deployments status --json
 npx wrangler versions list --json
 ```
 
-Identify and retain the last known good Worker version ID.
+Identify and retain the exact last known good Worker version ID.
 
-Do not deploy if the previous stable version cannot be identified.
+Do not deploy if the previous stable version cannot be identified. Do not rely on `wrangler rollback` without an explicit version ID because Cloudflare can otherwise select the previously uploaded version rather than the reviewed rollback target.
 
 ## Roll back
 
@@ -23,7 +23,7 @@ Use the exact last known good version ID:
 npx wrangler rollback <VERSION_ID> --message "rollback: production regression"
 ```
 
-Cloudflare rollback immediately creates a deployment that sends production traffic to the selected prior version.
+Cloudflare rollback immediately creates a deployment that sends production traffic to the selected prior version. Rollback changes the Worker deployment but does not revert external storage resources or deleted bindings.
 
 ## Verify recovery
 
