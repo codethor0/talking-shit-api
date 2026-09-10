@@ -62,6 +62,17 @@ describe("OpenAPI contract", () => {
     });
   });
 
+  it("documents optional constrained surprise parameters without defaults", () => {
+    const parameters = paths["/v1/surprise"]?.get.parameters ?? [];
+
+    expect(parameters.map((parameter) => parameter.name).sort()).toEqual(["category", "level"]);
+
+    for (const parameter of parameters) {
+      expect(parameter.schema).toHaveProperty("enum");
+      expect(parameter.schema).not.toHaveProperty("default");
+    }
+  });
+
   it("documents roast validation and preflight semantics", () => {
     expect(paths["/v1/roast"]?.get.responses).toHaveProperty("400");
     expect(paths["/v1/batch"]?.get.responses).toHaveProperty("400");

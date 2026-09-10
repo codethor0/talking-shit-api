@@ -5,6 +5,7 @@ Notable project changes are recorded here. The API follows semantic versioning o
 ## Unreleased
 
 - Standardized the Talking Shit API brand, project descriptions, contributor intake, support guidance, repository badges, and mechanical naming policy without changing the runtime API contract.
+- Added optional allowlisted category and level constraints to `GET /v1/surprise` while keeping omitted dimensions cryptographically randomized.
 
 ## 0.5.0 - 2026-09-10
 

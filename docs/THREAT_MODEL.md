@@ -27,6 +27,8 @@ Residual risk: Cloudflare Worker rate-limit counters are local to a Cloudflare l
 
 Controls: no command execution, SQL, templates, dynamic imports, filesystem, eval, or free-form content generation; strict allowlists for query keys/values.
 
+The surprise route accepts only the existing category and level allowlists. Any omitted dimension is randomized, so the route adds no free-form input surface.
+
 Residual risk: low in V1 because public input is never used in an execution context.
 
 ### SSRF / unsafe upstream consumption

@@ -1,10 +1,10 @@
-import { selectRoast, selectRoasts, selectSurpriseRoast } from "./engine";
+import { selectConstrainedSurpriseRoast, selectRoast, selectRoasts } from "./engine";
 import { headResponse, jsonResponse, optionsResponse } from "./http";
 import { OPENAPI_DOCUMENT } from "./openapi";
 import { enforceRateLimit } from "./rate-limit";
 import { getCatalogStats } from "./stats";
 import { API_VERSION, type AppEnv, CATEGORIES, LEVELS, SERVICE_VERSION } from "./types";
-import { validateBatchRequest, validateRoastRequest } from "./validation";
+import { validateBatchRequest, validateRoastRequest, validateSurpriseRequest } from "./validation";
 
 const MAX_URL_LENGTH = 2048;
 const ALLOWED_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -115,15 +115,13 @@ async function route(request: Request, env: AppEnv): Promise<Response> {
       }
       return success(selectRoasts(validation.category, validation.level, validation.count));
     }
-    case "/v1/surprise":
-      if (url.searchParams.size > 0) {
-        return errorResponse(
-          400,
-          "INVALID_REQUEST",
-          "Query parameters are not supported for this route.",
-        );
+    case "/v1/surprise": {
+      const validation = validateSurpriseRequest(url);
+      if (!validation.ok) {
+        return errorResponse(400, validation.code, validation.message);
       }
-      return success(selectSurpriseRoast());
+      return success(selectConstrainedSurpriseRoast(validation.category, validation.level));
+    }
     case "/v1/stats":
       if (url.searchParams.size > 0) {
         return errorResponse(

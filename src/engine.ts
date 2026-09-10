@@ -56,15 +56,23 @@ export function selectRoasts(
   return selected;
 }
 
-export function selectSurpriseRoast(
+export function selectConstrainedSurpriseRoast(
+  category: Category | undefined,
+  level: Level | undefined,
   randomIndex: (length: number) => number = cryptoRandomIndex,
 ): Roast {
-  const category = CATEGORIES[randomIndex(CATEGORIES.length)];
-  const level = LEVELS[randomIndex(LEVELS.length)];
+  const selectedCategory = category ?? CATEGORIES[randomIndex(CATEGORIES.length)];
+  const selectedLevel = level ?? LEVELS[randomIndex(LEVELS.length)];
 
-  if (category === undefined || level === undefined) {
+  if (selectedCategory === undefined || selectedLevel === undefined) {
     throw new RangeError("random index was outside the surprise dimensions");
   }
 
-  return selectRoast(category, level, randomIndex);
+  return selectRoast(selectedCategory, selectedLevel, randomIndex);
+}
+
+export function selectSurpriseRoast(
+  randomIndex: (length: number) => number = cryptoRandomIndex,
+): Roast {
+  return selectConstrainedSurpriseRoast(undefined, undefined, randomIndex);
 }
