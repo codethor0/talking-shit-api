@@ -11,6 +11,10 @@ const typesSource = await readFile(new URL("src/types.ts", root), "utf8");
 const readmeSource = await readFile(new URL("README.md", root), "utf8");
 const wranglerSource = await readFile(new URL("wrangler.jsonc", root), "utf8");
 const openapiSource = await readFile(new URL("src/openapi.ts", root), "utf8");
+const securityAuditSource = await readFile(
+  new URL(".github/workflows/security-audit.yml", root),
+  "utf8",
+);
 
 const canonicalProductName = "Talking Shit API";
 const canonicalSlug = "talking-shit-api";
@@ -25,6 +29,14 @@ if (!readmeSource.startsWith(`# ${canonicalProductName}\n`)) {
 
 if (!wranglerSource.includes(`"name": "${canonicalSlug}"`)) {
   throw new Error("POLICY: Cloudflare Worker name must remain talking-shit-api.");
+}
+
+if (!wranglerSource.includes('"preview_urls": false')) {
+  throw new Error("POLICY: Cloudflare Worker preview URLs must remain explicitly disabled.");
+}
+
+if (!wranglerSource.includes('"observability": {\n    "enabled": false\n  }')) {
+  throw new Error("POLICY: persisted Cloudflare Workers Logs must remain explicitly disabled.");
 }
 
 if (!openapiSource.includes(`title: "${canonicalProductName}"`)) {
@@ -73,22 +85,51 @@ function sameRecord(actual, expected) {
 }
 
 const codeOwners = (await readFile(new URL(".github/CODEOWNERS", root), "utf8")).trim();
-if (!codeOwners.split(/\r?\n/).includes("* @codethor0")) {
-  throw new Error("POLICY: .github/CODEOWNERS must retain the catch-all @codethor0 owner.");
+if (codeOwners !== "* @codethor0") {
+  throw new Error("POLICY: .github/CODEOWNERS must remain exactly * @codethor0.");
 }
 
-let dependabotConfigPresent = true;
-try {
-  await readFile(new URL(".github/dependabot.yml", root), "utf8");
-} catch (error) {
-  if (error?.code === "ENOENT") dependabotConfigPresent = false;
-  else throw error;
+for (const path of [".github/dependabot.yml", ".github/dependabot.yaml"]) {
+  let present = true;
+  try {
+    await readFile(new URL(path, root), "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") present = false;
+    else throw error;
+  }
+
+  if (present) {
+    throw new Error(`POLICY: ${path} is forbidden; dependency updates are maintainer-controlled.`);
+  }
 }
 
-if (dependabotConfigPresent) {
+if (
+  !securityAuditSource.includes("schedule:") ||
+  !securityAuditSource.includes("workflow_dispatch:")
+) {
+  throw new Error("POLICY: security audit workflow must support scheduled and manual execution.");
+}
+
+if (!securityAuditSource.includes("permissions:\n  contents: read")) {
+  throw new Error("POLICY: security audit workflow must remain read-only.");
+}
+
+if (!securityAuditSource.includes("persist-credentials: false")) {
+  throw new Error("POLICY: security audit checkout must not persist GitHub credentials.");
+}
+
+if (!securityAuditSource.includes("npm audit signatures")) {
   throw new Error(
-    "POLICY: .github/dependabot.yml is forbidden; dependency updates are maintainer-controlled.",
+    "POLICY: security audit workflow must verify registry signatures and provenance.",
   );
+}
+
+if (/\bsecrets\./.test(securityAuditSource)) {
+  throw new Error("POLICY: security audit workflow must not consume repository secrets.");
+}
+
+if (/^\s+(?:push|pull_request|pull_request_target)\s*:/m.test(securityAuditSource)) {
+  throw new Error("POLICY: security audit workflow must run only on schedule or manual dispatch.");
 }
 
 if (packageJson.dependencies && Object.keys(packageJson.dependencies).length > 0) {
@@ -317,5 +358,5 @@ for (const entry of workflowEntries) {
 }
 
 console.log(
-  "POLICY: PASS - zero runtime dependencies, exact reviewed dev toolchain, exact lifecycle-script allowlist, strict production Worker capabilities, isolated test typing, immutable read-only CI actions, CODEOWNERS present, Dependabot version updates absent, repository text emoji-free.",
+  "POLICY: PASS - zero runtime dependencies, exact reviewed dev toolchain, exact lifecycle-script allowlist, strict production Worker capabilities, explicit no-log/no-preview privacy controls, isolated test typing, immutable read-only CI actions, exact CODEOWNERS, scheduled signature verification, Dependabot absent, repository text emoji-free.",
 );

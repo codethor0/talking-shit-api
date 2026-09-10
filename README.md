@@ -93,6 +93,8 @@ Read `CONTRIBUTING.md` before opening a pull request. If you use an AI coding ag
 
 For project support and feature requests, see `SUPPORT.md`. Security issues must be reported privately as described in `SECURITY.md`.
 
+Security architecture, OWASP mapping, incident response, rollback, and availability guidance are indexed in `docs/security/README.md`.
+
 Canonical product naming and brand usage are documented in `docs/BRAND.md`.
 
 ## Cost model
