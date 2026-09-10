@@ -6,6 +6,15 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 No unreleased changes.
 
+## 0.4.0 - 2026-09-10
+
+- Added `git` and `oncall` as first-class developer-humor categories.
+- Expanded the curated catalog from 216 to 288 unique responses while preserving per-bucket quality gates.
+- Added `GET /v1/stats` with catalog totals derived directly from the source catalog.
+- Added stats route, HEAD, query-rejection, smoke, and OpenAPI contract coverage.
+- Hardened the OpenAPI path-set assertion so fixture insertion order cannot create false failures.
+- Preserved zero runtime dependencies, no database, no authentication, no application secrets, and no outbound production calls.
+
 ## 0.3.0 - 2026-09-10
 
 - Added `GET /v1/surprise` for cryptographically selected category, intensity, and curated roast.
