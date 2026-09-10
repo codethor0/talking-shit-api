@@ -21,11 +21,30 @@ describe("roast engine", () => {
     expect(() => selectRoast("general", "mild", () => 999)).toThrow(RangeError);
   });
 
-  it("keeps every catalog bucket non-empty", () => {
+  it("keeps every catalog bucket deep enough for useful randomness", () => {
     for (const category of CATEGORIES) {
       for (const level of LEVELS) {
-        expect(ROASTS[category][level].length).toBeGreaterThan(0);
+        expect(ROASTS[category][level].length).toBeGreaterThanOrEqual(8);
       }
     }
+  });
+
+  it("keeps catalog entries unique, single-line, and bounded", () => {
+    const allRoasts: string[] = [];
+
+    for (const category of CATEGORIES) {
+      for (const level of LEVELS) {
+        for (const roast of ROASTS[category][level]) {
+          expect(roast).toBe(roast.trim());
+          expect(roast).not.toMatch(/[\r\n]/);
+          expect(roast.length).toBeGreaterThanOrEqual(20);
+          expect(roast.length).toBeLessThanOrEqual(220);
+          allRoasts.push(roast);
+        }
+      }
+    }
+
+    expect(new Set(allRoasts).size).toBe(allRoasts.length);
+    expect(allRoasts).toHaveLength(144);
   });
 });
