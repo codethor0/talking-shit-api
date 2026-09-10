@@ -47,7 +47,7 @@ HEAD <same GET routes>
 OPTIONS <same GET routes>
 ```
 
-Categories: `general`, `code`, `debugging`, `deploy`, `meetings`, `security`.
+Categories: `general`, `code`, `debugging`, `deploy`, `meetings`, `security`, `git`, `oncall`.
 
 Levels: `mild`, `spicy`, `dark`.
 

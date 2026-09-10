@@ -34,6 +34,7 @@ There is no database, queue, object storage, remote model, outbound API, or seco
 - `src/app.ts`: HTTP routing and stable response envelope.
 - `src/validation.ts`: query allowlisting and validation.
 - `src/engine.ts`: roast selection.
+- `src/stats.ts`: catalog statistics derived directly from the bundled catalog.
 - `src/random.ts`: unbiased random index generation using Web Crypto.
 - `src/content/roasts.ts`: curated static content.
 - `src/rate-limit.ts`: transient client-key derivation and platform limiter call.

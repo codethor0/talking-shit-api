@@ -4,7 +4,7 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
-No unreleased changes.
+- Synchronized README and architecture documentation with the v0.4.0 contract and added a policy guard against category and level documentation drift.
 
 ## 0.4.0 - 2026-09-10
 

@@ -7,6 +7,44 @@ const packageJson = JSON.parse(await readFile(new URL("package.json", root), "ut
 const tsconfig = JSON.parse(await readFile(new URL("tsconfig.json", root), "utf8"));
 const testTsconfig = JSON.parse(await readFile(new URL("test/tsconfig.json", root), "utf8"));
 
+const typesSource = await readFile(new URL("src/types.ts", root), "utf8");
+const readmeSource = await readFile(new URL("README.md", root), "utf8");
+
+function extractConstStringArray(source, name) {
+  const startMarker = "export const " + name + " = [";
+  const start = source.indexOf(startMarker);
+  if (start < 0) {
+    throw new Error("POLICY: could not find " + name + " in src/types.ts.");
+  }
+
+  const bodyStart = start + startMarker.length;
+  const end = source.indexOf("] as const;", bodyStart);
+  if (end < 0) {
+    throw new Error("POLICY: could not parse " + name + " in src/types.ts.");
+  }
+
+  return [...source.slice(bodyStart, end).matchAll(/"([^"]+)"/g)].map((match) => match[1]);
+}
+
+function extractReadmeCodeList(label) {
+  const line = readmeSource.split(/\r?\n/).find((entry) => entry.startsWith(label + ": "));
+  if (!line) {
+    throw new Error("POLICY: README is missing the " + label + " line.");
+  }
+
+  return [...line.matchAll(/`([^`]+)`/g)].map((match) => match[1]);
+}
+
+function assertReadmeList(label, sourceValues) {
+  const documentedValues = extractReadmeCodeList(label);
+  if (JSON.stringify(documentedValues) !== JSON.stringify(sourceValues)) {
+    throw new Error("POLICY: README " + label + " must exactly match src/types.ts.");
+  }
+}
+
+assertReadmeList("Categories", extractConstStringArray(typesSource, "CATEGORIES"));
+assertReadmeList("Levels", extractConstStringArray(typesSource, "LEVELS"));
+
 function sameRecord(actual, expected) {
   const actualEntries = Object.entries(actual ?? {}).sort(([a], [b]) => a.localeCompare(b));
   const expectedEntries = Object.entries(expected).sort(([a], [b]) => a.localeCompare(b));
