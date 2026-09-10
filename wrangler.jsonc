@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "talking-shit-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-09",
+  "compatibility_flags": ["no_nodejs_compat", "no_nodejs_compat_v2"],
+  "workers_dev": true,
+  "ratelimits": [
+    {
+      "name": "RATE_LIMITER",
+      "namespace_id": "9132026",
+      "simple": {
+        "limit": 120,
+        "period": 60
+      }
+    }
+  ]
+}

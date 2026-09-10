@@ -1,0 +1,42 @@
+{
+  "name": "talking-shit-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A tiny, dark-humor developer API built for boring reliability.",
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "types": "wrangler types worker-configuration.d.ts",
+    "format": "biome check --write src test scripts vitest.config.ts package.json tsconfig.json biome.json wrangler.jsonc",
+    "lint": "biome ci src test scripts vitest.config.ts package.json tsconfig.json biome.json wrangler.jsonc",
+    "policy": "node scripts/policy-check.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p test/tsconfig.json",
+    "test": "vitest run",
+    "build:check": "rm -rf .build && wrangler deploy --dry-run --outdir .build",
+    "audit": "npm audit --audit-level=high",
+    "verify": "npm run policy && npm run lint && npm run types && npm run typecheck && npm test && npm run build:check && npm run deps:policy && npm run audit",
+    "deploy": "npm run verify && wrangler deploy",
+    "deps:policy": "node scripts/dependency-policy.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.12",
+    "@cloudflare/vitest-plugin": "1.1.5",
+    "fast-check": "4.9.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11",
+    "wrangler": "4.130.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "fsevents@2.3.3": true,
+    "workerd@1.20260907.1": true,
+    "workerd@1.20260908.1": true,
+    "sharp@0.35.4": true
+  },
+  "overrides": {
+    "sharp": "0.35.4"
+  }
+}
