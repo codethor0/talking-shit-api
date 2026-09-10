@@ -8,6 +8,8 @@ export const CATEGORIES = [
   "deploy",
   "meetings",
   "security",
+  "git",
+  "oncall",
 ] as const;
 
 export const LEVELS = ["mild", "spicy", "dark"] as const;

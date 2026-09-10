@@ -45,6 +45,6 @@ describe("roast engine", () => {
     }
 
     expect(new Set(allRoasts).size).toBe(allRoasts.length);
-    expect(allRoasts).toHaveLength(216);
+    expect(allRoasts).toHaveLength(288);
   });
 });
