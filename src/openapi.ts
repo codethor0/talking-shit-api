@@ -116,6 +116,28 @@ export const OPENAPI_DOCUMENT = {
         responses: sharedOptionsResponses,
       },
     },
+    "/v1/surprise": {
+      get: {
+        summary: "Return a fully random developer roast",
+        responses: {
+          "200": { description: "A roast with random category and intensity" },
+          "400": { description: "Query parameters are not accepted" },
+          ...sharedFailureResponses,
+        },
+      },
+      head: {
+        summary: "Random roast response headers",
+        responses: {
+          "200": { description: "Random roast response headers" },
+          "400": { description: "Query parameters are not accepted" },
+          ...sharedFailureResponses,
+        },
+      },
+      options: {
+        summary: "CORS preflight",
+        responses: sharedOptionsResponses,
+      },
+    },
     "/openapi.json": {
       get: {
         summary: "OpenAPI document",

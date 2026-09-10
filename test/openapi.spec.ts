@@ -12,7 +12,14 @@ type PublicPath = {
 };
 
 const paths = OPENAPI_DOCUMENT.paths as unknown as Record<string, PublicPath>;
-const expectedPaths = ["/", "/openapi.json", "/v1/categories", "/v1/health", "/v1/roast"];
+const expectedPaths = [
+  "/",
+  "/openapi.json",
+  "/v1/categories",
+  "/v1/health",
+  "/v1/roast",
+  "/v1/surprise",
+];
 
 describe("OpenAPI contract", () => {
   it("documents every public path and supported method", () => {
@@ -43,6 +50,8 @@ describe("OpenAPI contract", () => {
   it("documents roast validation and preflight semantics", () => {
     expect(paths["/v1/roast"]?.get.responses).toHaveProperty("400");
     expect(paths["/v1/roast"]?.head.responses).toHaveProperty("400");
+    expect(paths["/v1/surprise"]?.get.responses).toHaveProperty("400");
+    expect(paths["/v1/surprise"]?.head.responses).toHaveProperty("400");
 
     for (const path of expectedPaths) {
       expect(paths[path]?.options.responses).toHaveProperty("204");

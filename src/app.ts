@@ -1,4 +1,4 @@
-import { selectRoast } from "./engine";
+import { selectRoast, selectSurpriseRoast } from "./engine";
 import { headResponse, jsonResponse, optionsResponse } from "./http";
 import { OPENAPI_DOCUMENT } from "./openapi";
 import { enforceRateLimit } from "./rate-limit";
@@ -7,7 +7,14 @@ import { validateRoastRequest } from "./validation";
 
 const MAX_URL_LENGTH = 2048;
 const ALLOWED_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
-const PUBLIC_PATHS = new Set(["/", "/v1/health", "/v1/categories", "/v1/roast", "/openapi.json"]);
+const PUBLIC_PATHS = new Set([
+  "/",
+  "/v1/health",
+  "/v1/categories",
+  "/v1/roast",
+  "/v1/surprise",
+  "/openapi.json",
+]);
 
 function success(data: unknown): Response {
   return jsonResponse({
@@ -77,7 +84,7 @@ async function route(request: Request, env: AppEnv): Promise<Response> {
       return success({
         name: "Talking Shit API",
         description: "Dark developer humor. Tiny API. Boring architecture.",
-        endpoints: ["/v1/roast", "/v1/categories", "/v1/health", "/openapi.json"],
+        endpoints: ["/v1/roast", "/v1/surprise", "/v1/categories", "/v1/health", "/openapi.json"],
       });
     case "/v1/health":
       return success({ status: "talking shit" });
@@ -90,6 +97,15 @@ async function route(request: Request, env: AppEnv): Promise<Response> {
       }
       return success(selectRoast(validation.category, validation.level));
     }
+    case "/v1/surprise":
+      if (url.searchParams.size > 0) {
+        return errorResponse(
+          400,
+          "INVALID_REQUEST",
+          "Query parameters are not supported for this route.",
+        );
+      }
+      return success(selectSurpriseRoast());
     case "/openapi.json":
       return jsonResponse(OPENAPI_DOCUMENT);
     default:
