@@ -2,9 +2,17 @@
 
 Professional-grade shit talking for unprofessional developer moments.
 
-Talking Shit API is intentionally tiny: one Cloudflare Worker, zero runtime dependencies, no database, no authentication, no arbitrary user text, and no outbound network calls in V1.
+Talking Shit API is a tiny public API that returns curated developer roasts by category and intensity. It is intentionally boring underneath: one Cloudflare Worker, zero runtime dependencies, no database, no authentication, no arbitrary user text, no application secrets, and no outbound network calls in V1.
 
-## Quick start
+Live API: `https://talking-shit-api.codethor0.workers.dev`
+
+## Try it
+
+```bash
+curl 'https://talking-shit-api.codethor0.workers.dev/v1/roast?category=code&level=dark'
+```
+
+Or run it locally:
 
 ```bash
 npm ci
@@ -28,16 +36,20 @@ GET  /v1/categories
 GET  /v1/roast?category=code&level=dark
 GET  /openapi.json
 HEAD <same GET routes>
-OPTIONS <same routes>
+OPTIONS <same GET routes>
 ```
 
 Categories: `general`, `code`, `debugging`, `deploy`, `meetings`, `security`.
 
 Levels: `mild`, `spicy`, `dark`.
 
-## Project rules
+Defaults: `general` and `spicy`.
 
-Read [AGENTS.md](AGENTS.md) first if you are using an AI coding agent. The engineering rules live in [docs/DOCTRINE.md](docs/DOCTRINE.md). Architecture and security decisions live in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
+## Design
+
+V1 favors a small attack surface and predictable operation over feature count. Curated content ships inside the Worker. Random selection uses platform cryptography. Public input is allowlisted and never enters an execution context.
+
+The full architecture and threat model live in `docs/ARCHITECTURE.md` and `docs/THREAT_MODEL.md`.
 
 ## Verification
 
@@ -47,7 +59,13 @@ One command is the local release gate:
 npm run verify
 ```
 
-It regenerates Cloudflare types, checks formatting/lint, type-checks production source and authored TypeScript tests in separate type environments, runs the Worker boundary inside workerd plus property tests, audits dependencies, and performs a Wrangler dry-run build.
+It checks repository policy, formatting and lint, generated Cloudflare types, strict typechecking, unit and workerd-boundary tests, a Wrangler dry-run build, dependency policy, and the vulnerability audit.
+
+## Contributing
+
+Read `CONTRIBUTING.md` before opening a pull request. If you use an AI coding agent, also read `AGENTS.md` and `docs/AGENT-WORKFLOW.md`.
+
+Security issues must be reported privately as described in `SECURITY.md`.
 
 ## Cost model
 
@@ -55,4 +73,4 @@ V1 is designed for the Cloudflare Workers Free plan and a public GitHub reposito
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See `LICENSE`.
