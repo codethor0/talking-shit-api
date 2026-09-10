@@ -17,9 +17,11 @@ V1 stores no user records and has no application secrets.
 
 ### Denial of service / quota exhaustion
 
-Controls: constant-small request work, URL length cap, fixed response catalog, no remote subrequests, native rate limiter, Cloudflare platform limits.
+Controls: constant-small request work, URL length cap, fixed response catalog, no remote subrequests, one rate-limit bucket per observed client across all public paths, and Cloudflare platform limits.
 
-Residual risk: distributed abuse can consume the free daily request quota. The service is non-critical and should fail closed rather than create paid overages.
+The rate-limit key deliberately does not include the requested path. A client therefore cannot rotate arbitrary paths to create independent application rate buckets.
+
+Residual risk: Cloudflare Worker rate-limit counters are local to a Cloudflare location, permissive, and eventually consistent. Distributed abuse can still consume the free daily request quota. The service is non-critical and should fail closed rather than create paid overages.
 
 ### Injection
 
@@ -53,7 +55,7 @@ Controls: V1 does not accept real-person names, free-form targets, protected tra
 
 ## Rate-limit privacy note
 
-For an anonymous API, a stable per-client identifier is not available. V1 transiently reads Cloudflare's connecting address and hashes it with the route before calling the rate-limit binding. The raw address is not persisted or intentionally logged by application code. Shared NAT/proxy users may still share a rate bucket; this is an accepted V1 availability tradeoff.
+For an anonymous API, a stable authenticated user identifier is not available. V1 transiently reads Cloudflare's connecting address and hashes it with a fixed API-version namespace before calling the rate-limit binding. The raw address is not persisted or intentionally logged by application code, and the hash is not returned to clients. Shared NAT/proxy users may share a rate bucket; this is an accepted V1 availability tradeoff.
 
 ## Explicitly out of scope for V1
 

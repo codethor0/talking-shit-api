@@ -7,6 +7,7 @@ import { validateRoastRequest } from "./validation";
 
 const MAX_URL_LENGTH = 2048;
 const ALLOWED_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const PUBLIC_PATHS = new Set(["/", "/v1/health", "/v1/categories", "/v1/roast", "/openapi.json"]);
 
 function success(data: unknown): Response {
   return jsonResponse({
@@ -48,7 +49,7 @@ async function route(request: Request, env: AppEnv): Promise<Response> {
 
   let allowed: boolean;
   try {
-    allowed = await enforceRateLimit(request, url.pathname, env);
+    allowed = await enforceRateLimit(request, env);
   } catch {
     return errorResponse(503, "RATE_LIMIT_UNAVAILABLE", "Service temporarily unavailable.");
   }
@@ -66,44 +67,37 @@ async function route(request: Request, env: AppEnv): Promise<Response> {
   }
 
   if (request.method === "OPTIONS") {
-    return optionsResponse();
+    return PUBLIC_PATHS.has(url.pathname)
+      ? optionsResponse()
+      : errorResponse(404, "NOT_FOUND", "Route not found.");
   }
-
-  let response: Response;
 
   switch (url.pathname) {
     case "/":
-      response = success({
+      return success({
         name: "Talking Shit API",
         description: "Dark developer humor. Tiny API. Boring architecture.",
         endpoints: ["/v1/roast", "/v1/categories", "/v1/health", "/openapi.json"],
       });
-      break;
     case "/v1/health":
-      response = success({ status: "talking shit" });
-      break;
+      return success({ status: "talking shit" });
     case "/v1/categories":
-      response = success({ categories: CATEGORIES, levels: LEVELS });
-      break;
+      return success({ categories: CATEGORIES, levels: LEVELS });
     case "/v1/roast": {
       const validation = validateRoastRequest(url);
       if (!validation.ok) {
-        response = errorResponse(400, validation.code, validation.message);
-        break;
+        return errorResponse(400, validation.code, validation.message);
       }
-      response = success(selectRoast(validation.category, validation.level));
-      break;
+      return success(selectRoast(validation.category, validation.level));
     }
     case "/openapi.json":
-      response = jsonResponse(OPENAPI_DOCUMENT);
-      break;
+      return jsonResponse(OPENAPI_DOCUMENT);
     default:
-      response = errorResponse(404, "NOT_FOUND", "Route not found.");
+      return errorResponse(404, "NOT_FOUND", "Route not found.");
   }
-
-  return request.method === "HEAD" ? headResponse(response) : response;
 }
 
 export async function handleRequest(request: Request, env: AppEnv): Promise<Response> {
-  return route(request, env);
+  const response = await route(request, env);
+  return request.method === "HEAD" ? headResponse(response) : response;
 }

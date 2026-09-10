@@ -138,3 +138,54 @@ describe("Talking Shit API", () => {
     expect(body.openapi).toBe("3.1.0");
   });
 });
+
+describe("HTTP boundary hardening", () => {
+  it("rejects OPTIONS for an unknown path", async () => {
+    const response = await handleRequest(
+      new Request("https://example.com/not-a-route", { method: "OPTIONS" }),
+      allowEnv,
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  it("removes bodies from rate-limited HEAD responses", async () => {
+    const response = await handleRequest(
+      new Request("https://example.com/v1/health", { method: "HEAD" }),
+      denyEnv,
+    );
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("60");
+    expect(await response.text()).toBe("");
+  });
+
+  it("removes bodies from limiter-failure HEAD responses", async () => {
+    const failingEnv: AppEnv = {
+      RATE_LIMITER: {
+        async limit() {
+          throw new Error("unavailable");
+        },
+      },
+    };
+
+    const response = await handleRequest(
+      new Request("https://example.com/v1/health", { method: "HEAD" }),
+      failingEnv,
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.text()).toBe("");
+  });
+
+  it("removes bodies from oversized HEAD responses", async () => {
+    const oversizedPath = `/${"a".repeat(2100)}`;
+    const response = await handleRequest(
+      new Request(`https://example.com${oversizedPath}`, { method: "HEAD" }),
+      allowEnv,
+    );
+
+    expect(response.status).toBe(414);
+    expect(await response.text()).toBe("");
+  });
+});
