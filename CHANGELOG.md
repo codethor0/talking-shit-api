@@ -4,7 +4,16 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
-Changes merged after `v0.1.0` and not yet included in a tagged release.
+No unreleased changes.
+
+## 0.2.0 - 2026-09-10
+
+- Hardened rate limiting so one client cannot rotate paths to create independent application buckets.
+- Aligned HEAD, OPTIONS, error handling, smoke tests, and OpenAPI with the actual public HTTP contract.
+- Hardened GitHub Actions, dependency review, workflow permissions, dependency policy, and production capability checks.
+- Added deterministic line-ending policy and clearer contributor and project documentation.
+- Expanded the curated developer-humor catalog from 72 to 144 unique entries.
+
 
 ## 0.1.0 - 2026-09-10
 
