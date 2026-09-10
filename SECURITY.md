@@ -6,13 +6,19 @@ Security fixes target the current release and `main`.
 
 ## Reporting
 
-Do not publish exploitable details in a public issue. Before the first public release, maintainers must enable GitHub Private Vulnerability Reporting for this repository. Report vulnerabilities through that channel.
+GitHub Private Vulnerability Reporting is enabled for this repository. Report exploitable security issues through the repository Security tab instead of opening a public issue.
 
-Include the affected endpoint/component, reproduction steps, impact, and any suggested mitigation. Do not access data that is not yours, degrade service availability, or perform destructive testing.
+Include the affected endpoint or component, reproduction steps, impact, and any suggested mitigation. Do not access data that is not yours, degrade service availability, or perform destructive testing.
+
+Do not publish credentials, tokens, raw client addresses, exploit details, or private vulnerability information in public issues.
+
+Operational security guidance is indexed in `docs/security/README.md`.
 
 ## Release policy
 
-A known high/critical vulnerability or release-blocking security defect blocks release unless maintainers document why the finding is not exploitable in this project and record the decision.
+A known high or critical vulnerability or release-blocking security defect blocks release unless maintainers document why the finding is not exploitable in this project and record the decision.
+
+Changes involving dependencies, deployment, permissions, bindings, logging, privacy, public API contracts, compatibility flags, rate limits, or security controls require human boundary review.
 
 ## Temporary development-toolchain override
 

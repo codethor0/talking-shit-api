@@ -41,11 +41,11 @@ Control: V1 has no authenticated or privileged operations. There are no write/ad
 
 ### Information disclosure
 
-Controls: stable generic errors, no stack traces, no rejected-input reflection, no database, no application secrets, no application-level IP logging.
+Controls: stable generic errors, no stack traces, no rejected-input reflection, no database, no application secrets, no application-level IP logging, persisted Workers Logs explicitly disabled, and Worker preview URLs explicitly disabled.
 
 ### Supply-chain compromise
 
-Controls: zero runtime dependencies, exact dev versions, lockfile, `npm ci`, version-pinned install-script approvals with strict enforcement, audit gate, minimal GitHub Actions permissions, immutable action SHAs, dependency review.
+Controls: zero runtime dependencies, exact dev versions, lockfile, `npm ci`, version-pinned install-script approvals with strict enforcement, audit gate, minimal GitHub Actions permissions, immutable action SHAs, dependency review, and a scheduled read-only verification job that also checks registry signatures and provenance.
 
 ### CI pull-request attacks
 

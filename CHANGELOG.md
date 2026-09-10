@@ -4,6 +4,8 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
+- Hardened privacy and supply-chain verification with explicit no-log/no-preview Worker configuration, stricter repository policy, a security operations knowledge base, and a read-only scheduled security audit.
+
 ## 0.6.0 - 2026-09-10
 
 - Standardized the Talking Shit API brand, project descriptions, contributor intake, support guidance, repository badges, and mechanical naming policy without changing the runtime API contract.
