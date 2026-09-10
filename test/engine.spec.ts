@@ -24,7 +24,7 @@ describe("roast engine", () => {
   it("keeps every catalog bucket deep enough for useful randomness", () => {
     for (const category of CATEGORIES) {
       for (const level of LEVELS) {
-        expect(ROASTS[category][level].length).toBeGreaterThanOrEqual(8);
+        expect(ROASTS[category][level].length).toBeGreaterThanOrEqual(12);
       }
     }
   });
@@ -45,6 +45,6 @@ describe("roast engine", () => {
     }
 
     expect(new Set(allRoasts).size).toBe(allRoasts.length);
-    expect(allRoasts).toHaveLength(144);
+    expect(allRoasts).toHaveLength(216);
   });
 });
