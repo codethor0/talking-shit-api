@@ -9,6 +9,27 @@ const testTsconfig = JSON.parse(await readFile(new URL("test/tsconfig.json", roo
 
 const typesSource = await readFile(new URL("src/types.ts", root), "utf8");
 const readmeSource = await readFile(new URL("README.md", root), "utf8");
+const wranglerSource = await readFile(new URL("wrangler.jsonc", root), "utf8");
+const openapiSource = await readFile(new URL("src/openapi.ts", root), "utf8");
+
+const canonicalProductName = "Talking Shit API";
+const canonicalSlug = "talking-shit-api";
+
+if (packageJson.name !== canonicalSlug) {
+  throw new Error("POLICY: package name must remain talking-shit-api.");
+}
+
+if (!readmeSource.startsWith(`# ${canonicalProductName}\n`)) {
+  throw new Error("POLICY: README must use the canonical Talking Shit API product name.");
+}
+
+if (!wranglerSource.includes(`"name": "${canonicalSlug}"`)) {
+  throw new Error("POLICY: Cloudflare Worker name must remain talking-shit-api.");
+}
+
+if (!openapiSource.includes(`title: "${canonicalProductName}"`)) {
+  throw new Error("POLICY: OpenAPI title must use the canonical Talking Shit API product name.");
+}
 
 function extractConstStringArray(source, name) {
   const startMarker = "export const " + name + " = [";

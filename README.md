@@ -1,5 +1,9 @@
 # Talking Shit API
 
+[![CI](https://github.com/codethor0/talking-shit-api/actions/workflows/ci.yml/badge.svg)](https://github.com/codethor0/talking-shit-api/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/codethor0/talking-shit-api?label=release)](https://github.com/codethor0/talking-shit-api/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 Professional-grade shit talking for unprofessional developer moments.
 
 Talking Shit API is a tiny public API that returns curated developer roasts by category and intensity. It is intentionally boring underneath: one Cloudflare Worker, zero runtime dependencies, no database, no authentication, no arbitrary user text, no application secrets, and no outbound network calls in V1.
@@ -80,7 +84,9 @@ It checks repository policy, formatting and lint, generated Cloudflare types, st
 
 Read `CONTRIBUTING.md` before opening a pull request. If you use an AI coding agent, also read `AGENTS.md` and `docs/AGENT-WORKFLOW.md`.
 
-Security issues must be reported privately as described in `SECURITY.md`.
+For project support and feature requests, see `SUPPORT.md`. Security issues must be reported privately as described in `SECURITY.md`.
+
+Canonical product naming and brand usage are documented in `docs/BRAND.md`.
 
 ## Cost model
 
