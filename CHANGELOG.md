@@ -4,6 +4,8 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
+- Hardened post-release deployment documentation to require sustained version convergence, repeated production stability checks, and exact-ID non-interactive failback for scripted recovery.
+
 ## 0.6.1 - 2026-09-10
 
 - Decoupled Worker candidate upload from production promotion, added zero-percent candidate smoke testing through version overrides, and blocked direct production deployment from package scripts.

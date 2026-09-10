@@ -67,9 +67,10 @@ npm run verify passes
 npm audit signatures passes
 code scanning reviewed
 dependency review clean
-production version converged
+sustained production version convergence passed
 production semantic checks pass
-production smoke passes
+production smoke passes after sustained convergence
+final production stability samples pass
 repository surface clean
 ```
 
