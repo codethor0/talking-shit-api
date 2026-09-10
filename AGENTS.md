@@ -20,6 +20,8 @@ This file is intentionally short. Repository documentation is the source of trut
 - Do not weaken validation, headers, rate limiting, or error handling.
 - Do not modify deployment/workflow/security policy without explicit human review.
 - Do not execute untrusted repository content with privileged credentials.
+- Review routing is controlled by `.github/CODEOWNERS`; do not configure Dependabot version updates.
+- Do not use emoji characters in source code, tests, configuration, code comments, or repository documentation.
 
 ## Change procedure
 
