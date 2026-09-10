@@ -53,6 +53,22 @@ The repository must retain:
 - daily read-only security verification;
 - private vulnerability reporting.
 
+## Deployment baseline
+
+The release path must retain:
+
+- no direct production `deploy` package script;
+- candidate creation through `wrangler versions upload` only after full verification and registry-signature verification;
+- exact known-good and candidate Worker version IDs recorded before any traffic change;
+- candidate staging at 0% of normal traffic before promotion;
+- targeted candidate smoke through a version override while preview URLs remain disabled;
+- an expected service-version assertion during version-override smoke;
+- explicit human promotion using the exact candidate Worker version ID;
+- exact-ID rollback readiness before promotion;
+- no long-lived Cloudflare deployment credential in GitHub Actions.
+
+Package scripts must not contain production traffic-shifting `wrangler deploy`, `wrangler versions deploy`, `wrangler rollback`, or `wrangler triggers deploy` commands. Production promotion and rollback remain explicit operator actions.
+
 ## Release blockers
 
 Do not release when any of the following is true:

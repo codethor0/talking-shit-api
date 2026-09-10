@@ -11,6 +11,7 @@ const typesSource = await readFile(new URL("src/types.ts", root), "utf8");
 const readmeSource = await readFile(new URL("README.md", root), "utf8");
 const wranglerSource = await readFile(new URL("wrangler.jsonc", root), "utf8");
 const openapiSource = await readFile(new URL("src/openapi.ts", root), "utf8");
+const smokeSource = await readFile(new URL("scripts/smoke.sh", root), "utf8");
 const securityAuditSource = await readFile(
   new URL(".github/workflows/security-audit.yml", root),
   "utf8",
@@ -130,6 +131,57 @@ if (/\bsecrets\./.test(securityAuditSource)) {
 
 if (/^\s+(?:push|pull_request|pull_request_target)\s*:/m.test(securityAuditSource)) {
   throw new Error("POLICY: security audit workflow must run only on schedule or manual dispatch.");
+}
+
+const expectedPackageScripts = {
+  dev: "wrangler dev",
+  types: "wrangler types worker-configuration.d.ts",
+  format:
+    "biome check --write src test scripts vitest.config.ts package.json tsconfig.json biome.json wrangler.jsonc",
+  lint: "biome ci src test scripts vitest.config.ts package.json tsconfig.json biome.json wrangler.jsonc",
+  policy: "node scripts/policy-check.mjs",
+  typecheck: "tsc --noEmit -p tsconfig.json && tsc --noEmit -p test/tsconfig.json",
+  test: "vitest run",
+  "build:check": "rm -rf .build && wrangler deploy --dry-run --outdir .build",
+  audit: "npm audit --audit-level=high",
+  verify:
+    "npm run policy && npm run lint && npm run types && npm run typecheck && npm test && npm run shell:check && npm run build:check && npm run deps:policy && npm run audit",
+  "deps:policy": "node scripts/dependency-policy.mjs",
+  "shell:check": "bash -n scripts/smoke.sh",
+  "deployment:state": "wrangler deployments status --json && wrangler versions list --json",
+  "candidate:upload": "npm run verify && npm audit signatures && wrangler versions upload",
+};
+
+if (!sameRecord(packageJson.scripts, expectedPackageScripts)) {
+  throw new Error("POLICY: package scripts must remain exactly on the reviewed command allowlist.");
+}
+
+for (const [name, command] of Object.entries(packageJson.scripts ?? {})) {
+  if (
+    /\bwrangler\s+versions\s+deploy\b/.test(command) ||
+    /\bwrangler\s+rollback\b/.test(command) ||
+    /\bwrangler\s+triggers\s+deploy\b/.test(command)
+  ) {
+    throw new Error(
+      `POLICY: package script ${name} may not shift or roll back production traffic.`,
+    );
+  }
+
+  if (name !== "build:check" && /\bwrangler\s+deploy\b/.test(command)) {
+    throw new Error(
+      `POLICY: package script ${name} may not use direct production wrangler deploy.`,
+    );
+  }
+}
+
+if (!smokeSource.includes("Cloudflare-Workers-Version-Overrides")) {
+  throw new Error("POLICY: smoke script must retain exact Worker version override support.");
+}
+
+if (!smokeSource.includes("EXPECTED_SERVICE_VERSION is required with WORKER_VERSION_ID")) {
+  throw new Error(
+    "POLICY: targeted Worker version smoke must require an expected service version.",
+  );
 }
 
 if (packageJson.dependencies && Object.keys(packageJson.dependencies).length > 0) {
@@ -358,5 +410,5 @@ for (const entry of workflowEntries) {
 }
 
 console.log(
-  "POLICY: PASS - zero runtime dependencies, exact reviewed dev toolchain, exact lifecycle-script allowlist, strict production Worker capabilities, explicit no-log/no-preview privacy controls, isolated test typing, immutable read-only CI actions, exact CODEOWNERS, scheduled signature verification, Dependabot absent, repository text emoji-free.",
+  "POLICY: PASS - zero runtime dependencies, exact reviewed dev toolchain, exact lifecycle-script allowlist, strict production Worker capabilities, explicit no-log/no-preview privacy controls, isolated test typing, immutable read-only CI actions, exact CODEOWNERS, scheduled signature verification, controlled Worker candidate upload, human-gated production traffic changes, Dependabot absent, repository text emoji-free.",
 );
