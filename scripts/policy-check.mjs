@@ -1,11 +1,30 @@
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = new URL("../", import.meta.url);
 const packageJson = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
 const tsconfig = JSON.parse(await readFile(new URL("tsconfig.json", root), "utf8"));
 const testTsconfig = JSON.parse(await readFile(new URL("test/tsconfig.json", root), "utf8"));
+
+const codeOwners = (await readFile(new URL(".github/CODEOWNERS", root), "utf8")).trim();
+if (!codeOwners.split(/\r?\n/).includes("* @codethor0")) {
+  throw new Error("POLICY: .github/CODEOWNERS must retain the catch-all @codethor0 owner.");
+}
+
+let dependabotConfigPresent = true;
+try {
+  await readFile(new URL(".github/dependabot.yml", root), "utf8");
+} catch (error) {
+  if (error?.code === "ENOENT") dependabotConfigPresent = false;
+  else throw error;
+}
+
+if (dependabotConfigPresent) {
+  throw new Error(
+    "POLICY: .github/dependabot.yml is forbidden; dependency updates are maintainer-controlled.",
+  );
+}
 
 if (packageJson.dependencies && Object.keys(packageJson.dependencies).length > 0) {
   throw new Error("POLICY: V1 production dependencies must remain empty.");
@@ -71,6 +90,66 @@ const forbiddenPatterns = [
   },
 ];
 
+const emojiPattern =
+  /\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator}|\uFE0F|\u20E3/u;
+
+const repositoryTextExtensions = new Set([
+  ".cjs",
+  ".js",
+  ".json",
+  ".jsonc",
+  ".md",
+  ".mdx",
+  ".mjs",
+  ".sh",
+  ".ts",
+  ".tsx",
+  ".txt",
+  ".yaml",
+  ".yml",
+]);
+
+const ignoredRepositoryDirectories = new Set([
+  ".build",
+  ".git",
+  ".wrangler",
+  "coverage",
+  "dist",
+  "node_modules",
+]);
+
+async function walkRepositoryText(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    const path = join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      if (!ignoredRepositoryDirectories.has(entry.name)) {
+        files.push(...(await walkRepositoryText(path)));
+      }
+      continue;
+    }
+
+    if (entry.isFile() && repositoryTextExtensions.has(extname(entry.name))) {
+      files.push(path);
+    }
+  }
+
+  return files;
+}
+
+for (const file of await walkRepositoryText(fileURLToPath(root))) {
+  const source = await readFile(file, "utf8");
+
+  if (emojiPattern.test(source)) {
+    throw new Error(
+      `POLICY: emoji characters are forbidden in repository code and documentation: ${file}`,
+    );
+  }
+}
+
 async function walk(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
@@ -109,5 +188,5 @@ if (namedExportPattern.test(entrySource)) {
 }
 
 console.log(
-  "POLICY: PASS - zero runtime dependencies, patched sharp override, strict production Worker types, isolated test typing, one workerd boundary test, one public entrypoint.",
+  "POLICY: PASS - zero runtime dependencies, patched sharp override, strict production Worker types, isolated test typing, one workerd boundary test, one public entrypoint, CODEOWNERS present, Dependabot version updates absent, repository text emoji-free.",
 );
