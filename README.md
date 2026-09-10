@@ -18,6 +18,12 @@ Want the API to make every decision:
 curl 'https://talking-shit-api.codethor0.workers.dev/v1/surprise'
 ```
 
+Need a few unique roasts at once:
+
+```bash
+curl 'https://talking-shit-api.codethor0.workers.dev/v1/batch?count=3&category=code&level=dark'
+```
+
 Or run it locally:
 
 ```bash
@@ -40,6 +46,7 @@ GET  /
 GET  /v1/health
 GET  /v1/categories
 GET  /v1/roast?category=code&level=dark
+GET  /v1/batch?count=3&category=code&level=dark
 GET  /v1/surprise
 GET  /v1/stats
 GET  /openapi.json
@@ -51,7 +58,7 @@ Categories: `general`, `code`, `debugging`, `deploy`, `meetings`, `security`, `g
 
 Levels: `mild`, `spicy`, `dark`.
 
-Defaults: `general` and `spicy`.
+Defaults: `general` and `spicy`. Batch count defaults to `3` and is capped at `5`.
 
 ## Design
 

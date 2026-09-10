@@ -14,6 +14,10 @@ export const CATEGORIES = [
 
 export const LEVELS = ["mild", "spicy", "dark"] as const;
 
+export const MIN_BATCH_COUNT = 1 as const;
+export const DEFAULT_BATCH_COUNT = 3 as const;
+export const MAX_BATCH_COUNT = 5 as const;
+
 export type Category = (typeof CATEGORIES)[number];
 export type Level = (typeof LEVELS)[number];
 
