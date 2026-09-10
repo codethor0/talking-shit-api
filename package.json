@@ -2,7 +2,7 @@
   "name": "talking-shit-api",
   "version": "0.5.0",
   "private": true,
-  "description": "A tiny, dark-humor developer API built for boring reliability.",
+  "description": "A tiny, read-only API for curated developer roasts by category and intensity.",
   "type": "module",
   "engines": {
     "node": ">=24 <25"

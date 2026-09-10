@@ -4,6 +4,8 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
+- Standardized the Talking Shit API brand, project descriptions, contributor intake, support guidance, repository badges, and mechanical naming policy without changing the runtime API contract.
+
 ## 0.5.0 - 2026-09-10
 
 - Synchronized README and architecture documentation with the v0.4.0 contract and added a policy guard against category and level documentation drift.

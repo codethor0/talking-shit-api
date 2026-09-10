@@ -1,0 +1,38 @@
+name: Feature request
+description: Propose a focused improvement to the API or project.
+title: "[feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What developer problem or use case should this solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the smallest change that would solve the problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: contract
+    attributes:
+      label: Public contract impact
+      description: List any proposed endpoint, parameter, response, category, level, or documentation changes.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Architecture boundaries
+      options:
+        - label: I have noted whether this requires persistence, authentication, arbitrary user text, outbound runtime calls, or a runtime dependency.
+          required: true
+        - label: I searched existing issues before opening this request.
+          required: true

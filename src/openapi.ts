@@ -23,7 +23,8 @@ export const OPENAPI_DOCUMENT = {
   info: {
     title: "Talking Shit API",
     version: SERVICE_VERSION,
-    description: "A deliberately tiny, anonymous developer-humor API.",
+    description:
+      "A stateless Cloudflare Workers API for curated developer humor with zero runtime dependencies.",
   },
   servers: [{ url: "https://talking-shit-api.codethor0.workers.dev" }],
   paths: {
