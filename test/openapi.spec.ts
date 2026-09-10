@@ -19,11 +19,12 @@ const expectedPaths = [
   "/v1/health",
   "/v1/roast",
   "/v1/surprise",
+  "/v1/stats",
 ];
 
 describe("OpenAPI contract", () => {
   it("documents every public path and supported method", () => {
-    expect(Object.keys(paths).sort()).toEqual(expectedPaths);
+    expect(Object.keys(paths).sort()).toEqual([...expectedPaths].sort());
 
     for (const path of expectedPaths) {
       expect(paths[path]).toBeDefined();
@@ -52,6 +53,8 @@ describe("OpenAPI contract", () => {
     expect(paths["/v1/roast"]?.head.responses).toHaveProperty("400");
     expect(paths["/v1/surprise"]?.get.responses).toHaveProperty("400");
     expect(paths["/v1/surprise"]?.head.responses).toHaveProperty("400");
+    expect(paths["/v1/stats"]?.get.responses).toHaveProperty("400");
+    expect(paths["/v1/stats"]?.head.responses).toHaveProperty("400");
 
     for (const path of expectedPaths) {
       expect(paths[path]?.options.responses).toHaveProperty("204");

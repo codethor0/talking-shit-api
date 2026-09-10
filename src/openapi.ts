@@ -138,6 +138,28 @@ export const OPENAPI_DOCUMENT = {
         responses: sharedOptionsResponses,
       },
     },
+    "/v1/stats": {
+      get: {
+        summary: "Return catalog statistics",
+        responses: {
+          "200": { description: "Current catalog totals by category and intensity" },
+          "400": { description: "Query parameters are not accepted" },
+          ...sharedFailureResponses,
+        },
+      },
+      head: {
+        summary: "Catalog statistics response headers",
+        responses: {
+          "200": { description: "Catalog statistics response headers" },
+          "400": { description: "Query parameters are not accepted" },
+          ...sharedFailureResponses,
+        },
+      },
+      options: {
+        summary: "CORS preflight",
+        responses: sharedOptionsResponses,
+      },
+    },
     "/openapi.json": {
       get: {
         summary: "OpenAPI document",

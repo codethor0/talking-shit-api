@@ -41,6 +41,7 @@ GET  /v1/health
 GET  /v1/categories
 GET  /v1/roast?category=code&level=dark
 GET  /v1/surprise
+GET  /v1/stats
 GET  /openapi.json
 HEAD <same GET routes>
 OPTIONS <same GET routes>
