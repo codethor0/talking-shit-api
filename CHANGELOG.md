@@ -4,8 +4,11 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
+## 0.6.1 - 2026-09-10
+
 - Decoupled Worker candidate upload from production promotion, added zero-percent candidate smoke testing through version overrides, and blocked direct production deployment from package scripts.
 - Hardened privacy and supply-chain verification with explicit no-log/no-preview Worker configuration, stricter repository policy, a security operations knowledge base, and a read-only scheduled security audit.
+- Expanded adversarial HTTP boundary coverage for URL limits, encoded duplicate and unknown query keys, Unicode confusables, oversized batch counts, method rejection, bodyless HEAD errors, error security headers, and credential-free wildcard CORS behavior.
 
 ## 0.6.0 - 2026-09-10
 
