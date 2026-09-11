@@ -12,6 +12,7 @@ The project protects availability, release integrity, repository integrity, main
 - `DEPLOYMENT.md` defines candidate upload, zero-percent validation, human promotion, sustained production verification, and the release-publication gate.
 - `ROLLBACK.md` defines the Cloudflare rollback procedure.
 - `AVAILABILITY.md` documents failure modes, limits, and residual availability risk.
+- `CLOUDFLARE.md` defines Cloudflare routing, account-authentication, secret, abuse, and launch-hardening controls.
 
 ## Authority
 
@@ -32,4 +33,5 @@ Reviewed against:
 - Cloudflare Workers limits: https://developers.cloudflare.com/workers/platform/limits/
 - Cloudflare Workers rate limiting: https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/
 - Cloudflare Workers versions and deployments: https://developers.cloudflare.com/workers/versions-and-deployments/
+- Cloudflare Workers authentication and keychain storage: https://developers.cloudflare.com/workers/wrangler/commands/general/
 - npm audit signatures: https://docs.npmjs.com/cli/v11/commands/npm-audit/
