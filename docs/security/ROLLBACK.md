@@ -7,8 +7,8 @@ Rollback is the default response to a release-caused production regression. Rest
 Record the current deployment and version information:
 
 ```bash
-npx --no-install wrangler deployments status --json
-npx --no-install wrangler versions list --json
+npx --no-install wrangler deployments status --config ./wrangler.jsonc --json
+npx --no-install wrangler versions list --config ./wrangler.jsonc --json
 ```
 
 Identify and retain the exact last known good Worker version ID.
@@ -23,6 +23,7 @@ For an automated or error-handler recovery path, prefer an exact non-interactive
 KNOWN_GOOD_VERSION_ID="<known-good-worker-version-id>"
 
 npx --no-install wrangler versions deploy \
+  --config ./wrangler.jsonc \
   "${KNOWN_GOOD_VERSION_ID}@100%" \
   -y \
   --message "failback: production regression"
@@ -36,6 +37,7 @@ For an explicit operator-driven rollback, use the exact last known good version 
 
 ```bash
 npx --no-install wrangler rollback "$KNOWN_GOOD_VERSION_ID" \
+  --config ./wrangler.jsonc \
   --message "rollback: production regression"
 ```
 
@@ -48,7 +50,7 @@ Cloudflare rollback or exact-version failback changes the Worker deployment but 
 First confirm deployment state contains exactly the expected known-good Worker version at 100%:
 
 ```bash
-npx --no-install wrangler deployments status --json
+npx --no-install wrangler deployments status --config ./wrangler.jsonc --json
 ```
 
 Then require sustained observations of the expected known-good service version. Do not treat one matching health response as proof that every request path has converged.

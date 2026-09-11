@@ -21,9 +21,13 @@
 
 Talking Shit API is a tiny public API for curated developer roasts by category and intensity. Give it a category. Give it a level. Get roasted. That is the product.
 
+Current release: [`v0.6.2`](https://github.com/codethor0/talking-shit-api/releases/tag/v0.6.2)
+
 Live API: `https://talking-shit-api.codethor0.workers.dev`
 
 OpenAPI: `https://talking-shit-api.codethor0.workers.dev/openapi.json`
+
+Previous signed releases are intentionally retained as provenance and rollback history.
 
 ## Try it in 10 seconds
 
@@ -43,7 +47,7 @@ Example response:
   },
   "meta": {
     "api_version": "v1",
-    "service_version": "0.6.1"
+    "service_version": "0.6.2"
   }
 }
 ```

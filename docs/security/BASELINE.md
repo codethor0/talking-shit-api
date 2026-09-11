@@ -1,6 +1,6 @@
 # Security Baseline
 
-Baseline reviewed against Talking Shit API v0.6.1.
+Baseline reviewed against Talking Shit API v0.6.2.
 
 ## Runtime capability baseline
 
@@ -49,7 +49,7 @@ The repository must retain:
 - no `pull_request_target`;
 - signed maintainer commits and signed release tags;
 - protected `main`;
-- dependency review and CodeQL checks;
+- required `verify`, `dependency-review`, and `CodeQL` status checks on protected `main`;
 - daily read-only security verification;
 - private vulnerability reporting.
 

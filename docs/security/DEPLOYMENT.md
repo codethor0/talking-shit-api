@@ -74,8 +74,8 @@ Example:
 
 ```bash
 EXPECTED_RELEASE_COMMIT="<exact-reviewed-release-commit>" npm run candidate:upload -- \
-  --tag "v0.6.1-rc.1" \
-  --message "Talking Shit API v0.6.1 release candidate"
+  --tag "<release-version>-rc.1" \
+  --message "Talking Shit API <release-version> release candidate"
 ```
 
 `wrangler versions upload` creates a Worker version without deploying that version to production traffic. The package script runs the release preflight before verification and again immediately before upload, and it passes `--config ./wrangler.jsonc` explicitly so a local Wrangler config redirect cannot substitute a different deployment configuration.
@@ -126,7 +126,7 @@ The smoke script supports this without enabling preview URLs:
 
 ```bash
 WORKER_VERSION_ID="$CANDIDATE_VERSION_ID" \
-EXPECTED_SERVICE_VERSION="0.6.1" \
+EXPECTED_SERVICE_VERSION="<candidate-service-version>" \
 bash scripts/smoke.sh \
   "https://talking-shit-api.codethor0.workers.dev"
 ```
@@ -136,7 +136,7 @@ When `WORKER_VERSION_ID` is supplied, `EXPECTED_SERVICE_VERSION` is mandatory. T
 Also prove the ordinary production path is still healthy:
 
 ```bash
-EXPECTED_SERVICE_VERSION="0.6.0" \
+EXPECTED_SERVICE_VERSION="<known-good-service-version>" \
 bash scripts/smoke.sh \
   "https://talking-shit-api.codethor0.workers.dev"
 ```
@@ -186,7 +186,7 @@ Do not treat one matching HTTP response or one matching health/OpenAPI pair as p
 Example full-smoke command after the sustained gate:
 
 ```bash
-EXPECTED_SERVICE_VERSION="0.6.1" \
+EXPECTED_SERVICE_VERSION="<candidate-service-version>" \
 bash scripts/smoke.sh \
   "https://talking-shit-api.codethor0.workers.dev"
 ```
@@ -215,6 +215,7 @@ For an explicit interactive operator rollback, the exact-ID rollback command rem
 
 ```bash
 npx --no-install wrangler rollback "$KNOWN_GOOD_VERSION_ID" \
+  --config ./wrangler.jsonc \
   --message "rollback: production verification failed"
 ```
 
