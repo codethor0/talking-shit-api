@@ -21,7 +21,7 @@ Controls: constant-small request work with batch output hard-capped at five roas
 
 The rate-limit key deliberately does not include the requested path. A client therefore cannot rotate arbitrary paths to create independent application rate buckets.
 
-Residual risk: Cloudflare Worker rate-limit counters are local to a Cloudflare location, permissive, and eventually consistent. Distributed abuse can still consume the free daily request quota. The service is non-critical and should fail closed rather than create paid overages.
+Residual risk: Cloudflare Worker rate-limit counters are local to a Cloudflare location, permissive, and eventually consistent. The binding is evaluated after Worker execution begins, so application-level rate limiting does not shield the account-level Workers request allowance. Persistent or distributed abuse can still exhaust the free daily request quota. Shared NAT/proxy clients and some Worker-origin traffic can also aggregate into one application rate-limit identity. The service is non-critical and should fail closed rather than create paid overages.
 
 ### Injection
 
@@ -57,7 +57,7 @@ Controls: V1 does not accept real-person names, free-form targets, protected tra
 
 ## Rate-limit privacy note
 
-For an anonymous API, a stable authenticated user identifier is not available. V1 transiently reads Cloudflare's connecting address and hashes it with a fixed API-version namespace before calling the rate-limit binding. The raw address is not persisted or intentionally logged by application code, and the hash is not returned to clients. Shared NAT/proxy users may share a rate bucket; this is an accepted V1 availability tradeoff.
+For an anonymous API, a stable authenticated user identifier is not available. V1 transiently reads Cloudflare's connecting address and hashes it with a fixed API-version namespace before calling the rate-limit binding. The namespace is public and is not a secret salt; the derived value is pseudonymization for the limiter, not cryptographic anonymization. The raw address is not persisted or intentionally logged by application code, and the hash is not returned to clients. Shared NAT/proxy users may share a rate bucket; this is an accepted V1 availability tradeoff. If application logging or exposure of the derived key is ever introduced, this privacy decision must be reviewed again.
 
 ## Explicitly out of scope for V1
 

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const root = new URL("../", import.meta.url);
 const packageJson = JSON.parse(await readFile(new URL("package.json", root), "utf8"));
+const packageLock = JSON.parse(await readFile(new URL("package-lock.json", root), "utf8"));
 const tsconfig = JSON.parse(await readFile(new URL("tsconfig.json", root), "utf8"));
 const testTsconfig = JSON.parse(await readFile(new URL("test/tsconfig.json", root), "utf8"));
 
@@ -12,6 +13,11 @@ const readmeSource = await readFile(new URL("README.md", root), "utf8");
 const wranglerSource = await readFile(new URL("wrangler.jsonc", root), "utf8");
 const openapiSource = await readFile(new URL("src/openapi.ts", root), "utf8");
 const smokeSource = await readFile(new URL("scripts/smoke.sh", root), "utf8");
+const releasePreflightSource = await readFile(
+  new URL("scripts/release-preflight.mjs", root),
+  "utf8",
+);
+const deploymentSource = await readFile(new URL("docs/security/DEPLOYMENT.md", root), "utf8");
 const securityAuditSource = await readFile(
   new URL(".github/workflows/security-audit.yml", root),
   "utf8",
@@ -19,6 +25,23 @@ const securityAuditSource = await readFile(
 
 const canonicalProductName = "Talking Shit API";
 const canonicalSlug = "talking-shit-api";
+
+const serviceVersionMatch = typesSource.match(/export const SERVICE_VERSION = "([^"]+)" as const;/);
+const serviceVersion = serviceVersionMatch?.[1];
+
+if (!serviceVersion) {
+  throw new Error("POLICY: could not parse SERVICE_VERSION from src/types.ts.");
+}
+
+if (
+  packageJson.version !== serviceVersion ||
+  packageLock.version !== serviceVersion ||
+  packageLock.packages?.[""]?.version !== serviceVersion
+) {
+  throw new Error(
+    "POLICY: package.json, package-lock.json, and SERVICE_VERSION must remain exactly aligned.",
+  );
+}
 
 if (packageJson.name !== canonicalSlug) {
   throw new Error("POLICY: package name must remain talking-shit-api.");
@@ -142,18 +165,69 @@ const expectedPackageScripts = {
   policy: "node scripts/policy-check.mjs",
   typecheck: "tsc --noEmit -p tsconfig.json && tsc --noEmit -p test/tsconfig.json",
   test: "vitest run",
-  "build:check": "rm -rf .build && wrangler deploy --dry-run --outdir .build",
+  "build:check":
+    "rm -rf .build && wrangler deploy --dry-run --config ./wrangler.jsonc --outdir .build",
   audit: "npm audit --audit-level=high",
   verify:
     "npm run policy && npm run lint && npm run types && npm run typecheck && npm test && npm run shell:check && npm run build:check && npm run deps:policy && npm run audit",
   "deps:policy": "node scripts/dependency-policy.mjs",
   "shell:check": "bash -n scripts/smoke.sh",
-  "deployment:state": "wrangler deployments status --json && wrangler versions list --json",
-  "candidate:upload": "npm run verify && npm audit signatures && wrangler versions upload",
+  "release:preflight": "node scripts/release-preflight.mjs",
+  "deployment:state":
+    "wrangler deployments status --config ./wrangler.jsonc --json && wrangler versions list --config ./wrangler.jsonc --json",
+  "candidate:upload":
+    "npm run release:preflight && npm run verify && npm audit signatures && npm run release:preflight && wrangler versions upload --config ./wrangler.jsonc",
 };
 
 if (!sameRecord(packageJson.scripts, expectedPackageScripts)) {
   throw new Error("POLICY: package scripts must remain exactly on the reviewed command allowlist.");
+}
+
+for (const fragment of [
+  "EXPECTED_RELEASE_COMMIT",
+  "--show-toplevel",
+  "--porcelain=v1",
+  "ls-remote",
+  "hash-object",
+  ".wrangler/deploy/config.json",
+]) {
+  if (!releasePreflightSource.includes(fragment)) {
+    throw new Error(`POLICY: release preflight must retain control: ${fragment}`);
+  }
+}
+
+const githubVerificationCall =
+  /execFileSync\(\s*"gh"\s*,\s*\[\s*"api"\s*,\s*"--hostname"\s*,\s*"github\.com"\s*,/s;
+
+if (!githubVerificationCall.test(releasePreflightSource)) {
+  throw new Error(
+    "POLICY: release preflight must verify the reviewed commit through the github.com API.",
+  );
+}
+
+for (const pattern of [
+  /const\s+githubRepository\s*=\s*"codethor0\/talking-shit-api"/,
+  /githubCommit\.sha\s*!==\s*expectedReleaseCommit/,
+  /githubVerification\?\.verified\s*!==\s*true/,
+  /githubVerification\.reason\s*!==\s*"valid"/,
+]) {
+  if (!pattern.test(releasePreflightSource)) {
+    throw new Error(
+      "POLICY: release preflight must retain exact GitHub commit-verification semantics.",
+    );
+  }
+}
+
+for (const segment of deploymentSource.split("```bash\n").slice(1)) {
+  const commandBlock = segment.split("\n```", 1)[0] ?? "";
+  if (
+    commandBlock.includes("wrangler versions deploy") &&
+    !commandBlock.includes("--config ./wrangler.jsonc")
+  ) {
+    throw new Error(
+      "POLICY: release-critical wrangler versions deploy commands must pin ./wrangler.jsonc.",
+    );
+  }
 }
 
 for (const [name, command] of Object.entries(packageJson.scripts ?? {})) {
@@ -263,8 +337,51 @@ const forbiddenPatterns = [
   { pattern: /\bimportScripts\s*\(/, name: "importScripts()" },
   { pattern: /\bWebSocket\s*\(/, name: "WebSocket()" },
   { pattern: /\bimport\s*\(/, name: "dynamic import()" },
-  { pattern: /\bglobalThis\.fetch\s*\(/, name: "global outbound fetch()" },
 ];
+
+function containsForbiddenFetchReference(source, allowWorkerEntrypointMethod) {
+  if (!allowWorkerEntrypointMethod) {
+    return /\bfetch\b/.test(source);
+  }
+
+  const entrypointPattern = /\bfetch\s*\(\s*request\s*,\s*env\s*\)\s*:\s*Promise<Response>\s*\{/g;
+  const entrypointMatches = source.match(entrypointPattern) ?? [];
+  if (entrypointMatches.length !== 1) {
+    return true;
+  }
+
+  const withoutEntrypoint = source.replace(
+    entrypointPattern,
+    "workerEntrypoint(request, env): Promise<Response> {",
+  );
+  return /\bfetch\b/.test(withoutEntrypoint);
+}
+
+for (const fixture of [
+  "const outbound = fetch;",
+  "const { fetch: outbound } = globalThis;",
+  "globalThis.fetch('https://example.invalid/');",
+  "const outbound = globalThis['fetch'];",
+  "const outbound = Reflect.get(globalThis, 'fetch');",
+]) {
+  if (!containsForbiddenFetchReference(fixture, false)) {
+    throw new Error("POLICY: outbound-fetch regression fixture was not rejected.");
+  }
+}
+
+if (containsForbiddenFetchReference("const word = 'network';", false)) {
+  throw new Error("POLICY: outbound-fetch guard rejected unrelated source.");
+}
+
+const allowedEntrypointFixture =
+  "export default { fetch(request, env): Promise<Response> { return handleRequest(request, env); } };";
+if (containsForbiddenFetchReference(allowedEntrypointFixture, true)) {
+  throw new Error("POLICY: Worker fetch entrypoint must remain permitted.");
+}
+
+if (!containsForbiddenFetchReference(`${allowedEntrypointFixture} const outbound = fetch;`, true)) {
+  throw new Error("POLICY: Worker entrypoint allowance must not permit a second fetch reference.");
+}
 
 const emojiPattern =
   /\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator}|\uFE0F|\u20E3/u;
@@ -358,8 +475,8 @@ for (const file of await walk(srcDirectory)) {
     }
   }
 
-  if (!file.endsWith("/index.ts") && /\bfetch\s*\(/.test(source)) {
-    throw new Error(`POLICY: outbound fetch() capability found in ${file}`);
+  if (containsForbiddenFetchReference(source, file.endsWith("/index.ts"))) {
+    throw new Error(`POLICY: outbound fetch capability found in ${file}`);
   }
 }
 
@@ -410,5 +527,5 @@ for (const entry of workflowEntries) {
 }
 
 console.log(
-  "POLICY: PASS - zero runtime dependencies, exact reviewed dev toolchain, exact lifecycle-script allowlist, strict production Worker capabilities, explicit no-log/no-preview privacy controls, isolated test typing, immutable read-only CI actions, exact CODEOWNERS, scheduled signature verification, controlled Worker candidate upload, human-gated production traffic changes, Dependabot absent, repository text emoji-free.",
+  "POLICY: PASS - zero runtime dependencies, exact reviewed dev toolchain, exact lifecycle-script allowlist, strict production Worker capabilities, explicit no-log/no-preview privacy controls, isolated test typing, immutable read-only CI actions, exact CODEOWNERS, scheduled signature verification, controlled Worker candidate upload with exact-config preflight, human-gated production traffic changes, Dependabot absent, repository text emoji-free.",
 );

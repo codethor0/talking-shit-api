@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { handleRequest } from "../src/app";
 import { OPENAPI_DOCUMENT } from "../src/openapi";
+import type { AppEnv } from "../src/types";
 
 type Operation = {
   responses: Record<string, unknown>;
@@ -24,6 +26,14 @@ const expectedPaths = [
   "/v1/stats",
 ];
 
+const allowEnv: AppEnv = {
+  RATE_LIMITER: {
+    async limit() {
+      return { success: true };
+    },
+  },
+};
+
 describe("OpenAPI contract", () => {
   it("documents every public path and supported method", () => {
     expect(Object.keys(paths).sort()).toEqual([...expectedPaths].sort());
@@ -33,6 +43,18 @@ describe("OpenAPI contract", () => {
       expect(paths[path]?.get).toBeDefined();
       expect(paths[path]?.head).toBeDefined();
       expect(paths[path]?.options).toBeDefined();
+    }
+  });
+
+  it("keeps documented paths aligned with runtime preflight routing", async () => {
+    for (const path of Object.keys(paths)) {
+      const response = await handleRequest(
+        new Request(`https://example.com${path}`, { method: "OPTIONS" }),
+        allowEnv,
+      );
+
+      expect(response.status).toBe(204);
+      expect(await response.text()).toBe("");
     }
   });
 
