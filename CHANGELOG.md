@@ -5,6 +5,7 @@ Notable project changes are recorded here. The API follows semantic versioning o
 ## Unreleased
 
 - Hardened post-release deployment documentation to require sustained version convergence, repeated production stability checks, and exact-ID non-interactive failback for scripted recovery.
+- Polished the repository landing page with an embedded terminal demo, GitHub Sponsors funding metadata, researcher testing boundaries, and a Cloudflare-specific launch security checklist.
 
 ## 0.6.1 - 2026-09-10
 
