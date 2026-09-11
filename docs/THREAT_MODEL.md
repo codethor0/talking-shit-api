@@ -41,7 +41,9 @@ Control: V1 has no authenticated or privileged operations. There are no write/ad
 
 ### Information disclosure
 
-Controls: stable generic errors, no stack traces, no rejected-input reflection, no database, no application secrets, no application-level IP logging, persisted Workers Logs explicitly disabled, and Worker preview URLs explicitly disabled.
+Controls: stable generic errors, no stack traces, no rejected-input reflection, no database, no application secrets, no custom application logging, Workers invocation logs sampled at 25 percent, Workers traces sampled at 1 percent, no external telemetry destinations, and Worker preview URLs explicitly disabled.
+
+Cloudflare platform observability can retain sampled request, response, execution, and trace metadata for the platform retention window. Request query strings are redacted from platform logs and traces. Public query values remain bounded allowlisted API controls rather than arbitrary user text. Application code must not emit client addresses, headers, cookies, rate-limit keys, roast payloads, or other request-specific identifiers through console logging. Observability is non-versioned Cloudflare service state, so a Worker-version rollback alone does not restore the prior telemetry configuration; release failback must restore both the known-good Worker version and the known-good configuration.
 
 ### Supply-chain compromise
 
@@ -57,7 +59,7 @@ Controls: V1 does not accept real-person names, free-form targets, protected tra
 
 ## Rate-limit privacy note
 
-For an anonymous API, a stable authenticated user identifier is not available. V1 transiently reads Cloudflare's connecting address and hashes it with a fixed API-version namespace before calling the rate-limit binding. The namespace is public and is not a secret salt; the derived value is pseudonymization for the limiter, not cryptographic anonymization. The raw address is not persisted or intentionally logged by application code, and the hash is not returned to clients. Shared NAT/proxy users may share a rate bucket; this is an accepted V1 availability tradeoff. If application logging or exposure of the derived key is ever introduced, this privacy decision must be reviewed again.
+For an anonymous API, a stable authenticated user identifier is not available. V1 transiently reads Cloudflare's connecting address and hashes it with a fixed API-version namespace before calling the rate-limit binding. The namespace is public and is not a secret salt; the derived value is pseudonymization for the limiter, not cryptographic anonymization. The raw address is not persisted or intentionally logged by application code, and the hash is not returned to clients. Cloudflare may retain sampled platform request metadata through Workers observability independently of application logging. Shared NAT/proxy users may share a rate bucket; this is an accepted V1 availability tradeoff. If application logging or exposure of the derived key is ever introduced, this privacy decision must be reviewed again.
 
 ## Explicitly out of scope for V1
 

@@ -1,6 +1,17 @@
 # Rollback Procedure
 
-Rollback is the default response to a release-caused production regression. Restore known-good service before debugging forward.
+Rollback is the default response to a release-caused production regression. Restore known-good service and control-plane state before debugging forward.
+
+## Two recovery anchors
+
+Worker versions and observability do not share the same lifecycle. Observability is non-versioned Cloudflare Worker service state, so rolling back only the Worker version does not restore the previous observability configuration.
+
+For any release that changes a non-versioned setting, retain both:
+
+```text
+known-good Worker version ID
+known-good wrangler.jsonc from the signed prior release
+```
 
 ## Before every deployment
 
@@ -11,29 +22,40 @@ npx --no-install wrangler deployments status --config ./wrangler.jsonc --json
 npx --no-install wrangler versions list --config ./wrangler.jsonc --json
 ```
 
-Identify and retain the exact last known good Worker version ID.
+Identify and retain the exact last known-good Worker version ID.
 
-Do not deploy if the previous stable version cannot be identified. Do not rely on `wrangler rollback` without an explicit version ID because Cloudflare can otherwise select the previously uploaded version rather than the reviewed rollback target.
-
-## Scripted failback
-
-For an automated or error-handler recovery path, prefer an exact non-interactive deployment of the known-good version:
+For a release that changes non-versioned settings, materialize the exact signed prior configuration:
 
 ```bash
-KNOWN_GOOD_VERSION_ID="<known-good-worker-version-id>"
+KNOWN_GOOD_RELEASE_TAG="<signed-prior-release-tag>"
+KNOWN_GOOD_CONFIG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/talking-shit-known-good.XXXXXX")"
+KNOWN_GOOD_CONFIG="$KNOWN_GOOD_CONFIG_DIR/wrangler.jsonc"
 
-npx --no-install wrangler versions deploy \
-  --config ./wrangler.jsonc \
-  "${KNOWN_GOOD_VERSION_ID}@100%" \
-  -y \
-  --message "failback: production regression"
+git show "${KNOWN_GOOD_RELEASE_TAG}:wrangler.jsonc" > "$KNOWN_GOOD_CONFIG"
+shasum -a 256 "$KNOWN_GOOD_CONFIG"
 ```
 
-This avoids relying on interactive rollback prompts during unattended recovery.
+Record the source tag and hash. Do not deploy if either recovery anchor cannot be identified exactly.
 
-## Interactive rollback
+Do not rely on `wrangler rollback` without an explicit version ID because Cloudflare can otherwise select a previously uploaded version rather than the reviewed rollback target.
 
-For an explicit operator-driven rollback, use the exact last known good version ID:
+## Dual-anchor failback
+
+For a release that changed observability or another non-versioned setting, prefer one exact non-interactive `versions deploy` using the known-good configuration:
+
+```bash
+npx --no-install wrangler versions deploy \
+  --config "$KNOWN_GOOD_CONFIG" \
+  "${KNOWN_GOOD_VERSION_ID}@100%" \
+  -y \
+  --message "failback: restore known-good Worker and non-versioned settings"
+```
+
+The command restores the exact Worker version while also synchronizing non-versioned settings from the recorded known-good configuration.
+
+## Worker-only rollback
+
+If a release did not change non-versioned settings, an explicit Worker-version rollback remains valid:
 
 ```bash
 npx --no-install wrangler rollback "$KNOWN_GOOD_VERSION_ID" \
@@ -43,15 +65,19 @@ npx --no-install wrangler rollback "$KNOWN_GOOD_VERSION_ID" \
 
 Depending on Wrangler version and terminal context, the rollback command can still request confirmation. The operator must verify the exact target before accepting the prompt.
 
-Cloudflare rollback or exact-version failback changes the Worker deployment but does not revert external storage resources or deleted bindings.
+Do not use Worker-only rollback as the default recovery for an observability-changing release because it does not restore the previous non-versioned telemetry state.
+
+Cloudflare rollback or exact-version failback changes the Worker deployment but does not revert external storage resources or deleted bindings. V1 intentionally has no database or mutable application storage.
 
 ## Verify recovery
 
-First confirm deployment state contains exactly the expected known-good Worker version at 100%:
+First confirm deployment state contains exactly the expected known-good Worker version at 100 percent:
 
 ```bash
 npx --no-install wrangler deployments status --config ./wrangler.jsonc --json
 ```
+
+For a dual-anchor failback, also verify through the Cloudflare control plane that the non-versioned settings match the recorded known-good configuration.
 
 Then require sustained observations of the expected known-good service version. Do not treat one matching health response as proof that every request path has converged.
 
@@ -63,7 +89,7 @@ bash scripts/smoke.sh \
   https://talking-shit-api.codethor0.workers.dev
 ```
 
-Recovery is complete only when the exact deployment state, sustained service-version observations, and the full smoke suite all pass.
+Recovery is complete only when the exact deployment state, required non-versioned state, sustained service-version observations, and the full smoke suite all pass.
 
 ## Security incident exception
 
@@ -74,8 +100,8 @@ If the incident involves suspected Cloudflare or maintainer credential compromis
 Do not:
 
 - delete the failing version before evidence is captured;
-- debug forward while production remains broken when a safe rollback is available;
+- debug forward while production remains broken when safe failback is available;
 - select a rollback version by age alone;
+- assume Worker-version rollback restores non-versioned observability;
+- reconstruct the known-good configuration from memory;
 - roll back across incompatible storage or binding changes without reviewing Cloudflare rollback constraints.
-
-V1 intentionally has no database or mutable storage, which keeps rollback risk small.

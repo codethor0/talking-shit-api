@@ -11,6 +11,7 @@ const testTsconfig = JSON.parse(await readFile(new URL("test/tsconfig.json", roo
 const typesSource = await readFile(new URL("src/types.ts", root), "utf8");
 const readmeSource = await readFile(new URL("README.md", root), "utf8");
 const wranglerSource = await readFile(new URL("wrangler.jsonc", root), "utf8");
+const wranglerConfig = JSON.parse(wranglerSource);
 const openapiSource = await readFile(new URL("src/openapi.ts", root), "utf8");
 const smokeSource = await readFile(new URL("scripts/smoke.sh", root), "utf8");
 const releasePreflightSource = await readFile(
@@ -18,6 +19,12 @@ const releasePreflightSource = await readFile(
   "utf8",
 );
 const deploymentSource = await readFile(new URL("docs/security/DEPLOYMENT.md", root), "utf8");
+const rollbackSource = await readFile(new URL("docs/security/ROLLBACK.md", root), "utf8");
+const observabilityGuideSource = await readFile(
+  new URL("docs/security/OBSERVABILITY.md", root),
+  "utf8",
+);
+const releaseSource = await readFile(new URL("docs/RELEASE.md", root), "utf8");
 const securityAuditSource = await readFile(
   new URL(".github/workflows/security-audit.yml", root),
   "utf8",
@@ -59,8 +66,117 @@ if (!wranglerSource.includes('"preview_urls": false')) {
   throw new Error("POLICY: Cloudflare Worker preview URLs must remain explicitly disabled.");
 }
 
-if (!wranglerSource.includes('"observability": {\n    "enabled": false\n  }')) {
-  throw new Error("POLICY: persisted Cloudflare Workers Logs must remain explicitly disabled.");
+const observability = wranglerConfig.observability;
+
+if (observability?.enabled !== true) {
+  throw new Error("POLICY: bounded Cloudflare observability must remain explicitly enabled.");
+}
+
+if (observability.redact_query_string !== true) {
+  throw new Error(
+    "POLICY: request query strings must remain redacted from Cloudflare logs and traces.",
+  );
+}
+
+if (observability.logs?.enabled !== true) {
+  throw new Error("POLICY: Cloudflare Workers Logs must remain explicitly enabled.");
+}
+
+if (observability.logs?.invocation_logs !== true) {
+  throw new Error("POLICY: Cloudflare invocation logs must remain explicitly enabled.");
+}
+
+if (observability.logs?.head_sampling_rate !== 0.25) {
+  throw new Error("POLICY: Workers Logs head sampling must remain exactly 25 percent.");
+}
+
+if (Array.isArray(observability.logs?.destinations) && observability.logs.destinations.length > 0) {
+  throw new Error("POLICY: external Workers Logs destinations are forbidden.");
+}
+
+if (observability.traces?.enabled !== true || observability.traces.head_sampling_rate !== 0.01) {
+  throw new Error("POLICY: Workers traces must remain enabled at exactly 1 percent head sampling.");
+}
+
+if (
+  Array.isArray(observability.traces?.destinations) &&
+  observability.traces.destinations.length > 0
+) {
+  throw new Error("POLICY: external trace destinations are forbidden.");
+}
+
+const observabilityKeys = Object.keys(observability).sort();
+const expectedObservabilityKeys = ["enabled", "logs", "redact_query_string", "traces"].sort();
+
+if (JSON.stringify(observabilityKeys) !== JSON.stringify(expectedObservabilityKeys)) {
+  throw new Error(
+    "POLICY: observability top-level keys must remain exactly on the reviewed allowlist.",
+  );
+}
+
+const observabilityLogKeys = Object.keys(observability.logs).sort();
+const expectedObservabilityLogKeys = ["enabled", "head_sampling_rate", "invocation_logs"].sort();
+
+if (JSON.stringify(observabilityLogKeys) !== JSON.stringify(expectedObservabilityLogKeys)) {
+  throw new Error(
+    "POLICY: Workers Logs configuration keys must remain exactly on the reviewed allowlist.",
+  );
+}
+
+const observabilityTraceKeys = Object.keys(observability.traces).sort();
+const expectedObservabilityTraceKeys = ["enabled", "head_sampling_rate"].sort();
+
+if (JSON.stringify(observabilityTraceKeys) !== JSON.stringify(expectedObservabilityTraceKeys)) {
+  throw new Error(
+    "POLICY: Workers trace configuration keys must remain exactly on the reviewed allowlist.",
+  );
+}
+
+if (wranglerConfig.logpush === true) {
+  throw new Error("POLICY: paid Workers Logpush is forbidden.");
+}
+
+if (Array.isArray(wranglerConfig.tail_consumers) && wranglerConfig.tail_consumers.length > 0) {
+  throw new Error("POLICY: Tail Worker consumers are forbidden.");
+}
+
+if ("placement" in wranglerConfig) {
+  throw new Error("POLICY: Smart Placement is not justified for the no-upstream V1 Worker.");
+}
+
+if (
+  Array.isArray(wranglerConfig.analytics_engine_datasets) &&
+  wranglerConfig.analytics_engine_datasets.length > 0
+) {
+  throw new Error(
+    "POLICY: Analytics Engine is not an approved production observability dependency.",
+  );
+}
+
+for (const [name, document, fragments] of [
+  [
+    "deployment",
+    deploymentSource,
+    [
+      "non-versioned",
+      "KNOWN_GOOD_CONFIG",
+      "Human non-versioned settings gate",
+      "query-string redaction",
+    ],
+  ],
+  ["rollback", rollbackSource, ["non-versioned", "KNOWN_GOOD_CONFIG", "Dual-anchor failback"]],
+  [
+    "observability",
+    observabilityGuideSource,
+    ["Non-versioned control-plane state", "Synthetic query-redaction verification", "inconclusive"],
+  ],
+  ["release", releaseSource, ["non-versioned", "KNOWN_GOOD_CONFIG", "redaction verification"]],
+]) {
+  for (const fragment of fragments) {
+    if (!document.includes(fragment)) {
+      throw new Error(`POLICY: ${name} documentation must retain control: ${fragment}`);
+    }
+  }
 }
 
 if (!openapiSource.includes(`title: "${canonicalProductName}"`)) {
@@ -218,15 +334,29 @@ for (const pattern of [
   }
 }
 
-for (const segment of deploymentSource.split("```bash\n").slice(1)) {
-  const commandBlock = segment.split("\n```", 1)[0] ?? "";
-  if (
-    commandBlock.includes("wrangler versions deploy") &&
-    !commandBlock.includes("--config ./wrangler.jsonc")
-  ) {
-    throw new Error(
-      "POLICY: release-critical wrangler versions deploy commands must pin ./wrangler.jsonc.",
+const allowedVersionDeployConfigPins = [
+  "--config ./wrangler.jsonc",
+  '--config "$KNOWN_GOOD_CONFIG"',
+];
+
+for (const [documentName, commandDocument] of [
+  ["deployment", deploymentSource],
+  ["rollback", rollbackSource],
+  ["release", releaseSource],
+]) {
+  for (const segment of commandDocument.split("```bash\n").slice(1)) {
+    const commandBlock = segment.split("\n```", 1)[0] ?? "";
+    if (!commandBlock.includes("wrangler versions deploy")) continue;
+
+    const hasApprovedConfigPin = allowedVersionDeployConfigPins.some((pin) =>
+      commandBlock.includes(pin),
     );
+
+    if (!hasApprovedConfigPin) {
+      throw new Error(
+        `POLICY: release-critical wrangler versions deploy commands in ${documentName} must pin either ./wrangler.jsonc or the exact KNOWN_GOOD_CONFIG.`,
+      );
+    }
   }
 }
 
@@ -338,6 +468,35 @@ const forbiddenPatterns = [
   { pattern: /\bWebSocket\s*\(/, name: "WebSocket()" },
   { pattern: /\bimport\s*\(/, name: "dynamic import()" },
 ];
+
+function containsConsoleCapability(sourceText) {
+  return /\bconsole\b/.test(sourceText);
+}
+
+for (const fixture of [
+  `console.log("x");`,
+  `console.trace("x");`,
+  `console["log"]("x");`,
+  `const c = console; c.log("x");`,
+  `const { log } = console; log("x");`,
+  `globalThis["console"].log("x");`,
+  `const text = "console.log";`,
+  `// console.trace("x")\nconst value = 1;`,
+]) {
+  if (!containsConsoleCapability(fixture)) {
+    throw new Error("POLICY: strict console-token regression fixture was not rejected.");
+  }
+}
+
+for (const fixture of [
+  `const consoleValue = 1;`,
+  `const consoles = [] as string[];`,
+  `const value = 1;`,
+]) {
+  if (containsConsoleCapability(fixture)) {
+    throw new Error("POLICY: strict console-token guard rejected a non-token substring.");
+  }
+}
 
 function containsForbiddenFetchReference(source, allowWorkerEntrypointMethod) {
   if (!allowWorkerEntrypointMethod) {
@@ -458,6 +617,12 @@ const srcDirectory = fileURLToPath(new URL("src/", root));
 for (const file of await walk(srcDirectory)) {
   const source = await readFile(file, "utf8");
 
+  if (containsConsoleCapability(source)) {
+    throw new Error(
+      `POLICY: forbidden standalone console token found in production source: ${file}`,
+    );
+  }
+
   for (const { pattern, name } of forbiddenPatterns) {
     if (pattern.test(source)) {
       throw new Error(`POLICY: forbidden production capability ${name} found in ${file}`);
@@ -527,5 +692,5 @@ for (const entry of workflowEntries) {
 }
 
 console.log(
-  "POLICY: PASS - zero runtime dependencies, exact reviewed dev toolchain, exact lifecycle-script allowlist, strict production Worker capabilities, explicit no-log/no-preview privacy controls, isolated test typing, immutable read-only CI actions, exact CODEOWNERS, scheduled signature verification, controlled Worker candidate upload with exact-config preflight, human-gated production traffic changes, Dependabot absent, repository text emoji-free.",
+  "POLICY: PASS - zero runtime dependencies, exact reviewed dev toolchain, exact lifecycle-script allowlist, strict production Worker capabilities, bounded sampled native observability with no custom application logging or external telemetry destinations, preview URLs disabled, isolated test typing, immutable read-only CI actions, exact CODEOWNERS, scheduled signature verification, controlled Worker candidate upload with exact-config preflight, human-gated production traffic changes, Dependabot absent, repository text emoji-free.",
 );
