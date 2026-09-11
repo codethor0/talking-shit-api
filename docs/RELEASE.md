@@ -6,7 +6,7 @@
 4. Run `npm audit signatures`.
 5. Review dependency, CodeQL, and security findings.
 6. Review the diff since the previous release for attack-surface, privacy, permission, binding, logging, and cost changes.
-7. Confirm `README.md`, `src/openapi.ts`, `docs/THREAT_MODEL.md`, `docs/security/BASELINE.md`, package version, and service version agree.
+7. Confirm `README.md`, `CHANGELOG.md`, `src/openapi.ts`, `docs/THREAT_MODEL.md`, `docs/security/BASELINE.md`, package version, and service version agree.
 8. Require signed release commits, green required checks, and a clean exact release-file boundary.
 9. Follow `docs/security/DEPLOYMENT.md`: snapshot the current deployment and exact known-good Worker version ID before creating a candidate.
 10. Upload the candidate with `EXPECTED_RELEASE_COMMIT="<exact-reviewed-release-commit>" npm run candidate:upload` from the exact reviewed release commit. The package script reruns the preflight immediately before upload and explicitly pins `./wrangler.jsonc`. Candidate upload must not change production traffic.

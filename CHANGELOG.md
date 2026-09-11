@@ -4,6 +4,8 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
+- Refresh the landing page and operational documentation for the current v0.6.2 production state, generic release examples, and exact Wrangler configuration pinning.
+
 ## 0.6.2 - 2026-09-10
 
 - Harden release provenance with an exact signed-main clean-tree preflight, explicit Wrangler configuration pinning, and a guard against local config redirection.

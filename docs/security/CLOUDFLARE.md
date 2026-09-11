@@ -76,7 +76,7 @@ The current Worker does not require application secrets.
 Read-only verification:
 
 ```bash
-npx --no-install wrangler secret list --format json
+npx --no-install wrangler secret list --config ./wrangler.jsonc --format json
 ```
 
 The expected result is an empty list. A newly added secret is a security-boundary change and requires human review, documentation, and threat-model reconciliation.
@@ -86,8 +86,8 @@ The expected result is an empty list. A newly added secret is a security-boundar
 Before any production traffic change, record the active Worker deployment and the exact known-good Worker version ID:
 
 ```bash
-npx --no-install wrangler deployments status --json
-npx --no-install wrangler versions list --json
+npx --no-install wrangler deployments status --config ./wrangler.jsonc --json
+npx --no-install wrangler versions list --config ./wrangler.jsonc --json
 ```
 
 Candidate code must be uploaded without immediate production promotion, validated by exact Worker version override, and promoted only after the human gate defined in `docs/security/DEPLOYMENT.md`.
