@@ -43,7 +43,7 @@ Control: V1 has no authenticated or privileged operations. There are no write/ad
 
 Controls: stable generic errors, no stack traces, no rejected-input reflection, no database, no application secrets, no custom application logging, Workers invocation logs sampled at 25 percent, Workers traces sampled at 1 percent, no external telemetry destinations, and Worker preview URLs explicitly disabled.
 
-Cloudflare platform observability can retain sampled request, response, execution, and trace metadata for the platform retention window. Request query strings are redacted from platform logs and traces. Public query values remain bounded allowlisted API controls rather than arbitrary user text. Application code must not emit client addresses, headers, cookies, rate-limit keys, roast payloads, or other request-specific identifiers through console logging.
+Cloudflare platform observability can retain sampled request, response, execution, and trace metadata for the platform retention window. Request query strings are redacted from platform logs and traces. Public query values remain bounded allowlisted API controls rather than arbitrary user text. Application code must not emit client addresses, headers, cookies, rate-limit keys, roast payloads, or other request-specific identifiers through console logging. Observability is non-versioned Cloudflare service state, so a Worker-version rollback alone does not restore the prior telemetry configuration; release failback must restore both the known-good Worker version and the known-good configuration.
 
 ### Supply-chain compromise
 

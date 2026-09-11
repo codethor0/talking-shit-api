@@ -1,6 +1,6 @@
 # ADR 0002: Explicit Privacy and Continuous Verification
 
-Status: Superseded by ADR 0003
+Status: Partially superseded by ADR 0003 (observability decision only)
 Date: 2026-09-10
 
 ## Context

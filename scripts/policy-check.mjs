@@ -19,6 +19,12 @@ const releasePreflightSource = await readFile(
   "utf8",
 );
 const deploymentSource = await readFile(new URL("docs/security/DEPLOYMENT.md", root), "utf8");
+const rollbackSource = await readFile(new URL("docs/security/ROLLBACK.md", root), "utf8");
+const observabilityGuideSource = await readFile(
+  new URL("docs/security/OBSERVABILITY.md", root),
+  "utf8",
+);
+const releaseSource = await readFile(new URL("docs/RELEASE.md", root), "utf8");
 const securityAuditSource = await readFile(
   new URL(".github/workflows/security-audit.yml", root),
   "utf8",
@@ -145,6 +151,32 @@ if (
   throw new Error(
     "POLICY: Analytics Engine is not an approved production observability dependency.",
   );
+}
+
+for (const [name, document, fragments] of [
+  [
+    "deployment",
+    deploymentSource,
+    [
+      "non-versioned",
+      "KNOWN_GOOD_CONFIG",
+      "Human non-versioned settings gate",
+      "query-string redaction",
+    ],
+  ],
+  ["rollback", rollbackSource, ["non-versioned", "KNOWN_GOOD_CONFIG", "Dual-anchor failback"]],
+  [
+    "observability",
+    observabilityGuideSource,
+    ["Non-versioned control-plane state", "Synthetic query-redaction verification", "inconclusive"],
+  ],
+  ["release", releaseSource, ["non-versioned", "KNOWN_GOOD_CONFIG", "redaction verification"]],
+]) {
+  for (const fragment of fragments) {
+    if (!document.includes(fragment)) {
+      throw new Error(`POLICY: ${name} documentation must retain control: ${fragment}`);
+    }
+  }
 }
 
 if (!openapiSource.includes(`title: "${canonicalProductName}"`)) {
@@ -302,15 +334,29 @@ for (const pattern of [
   }
 }
 
-for (const segment of deploymentSource.split("```bash\n").slice(1)) {
-  const commandBlock = segment.split("\n```", 1)[0] ?? "";
-  if (
-    commandBlock.includes("wrangler versions deploy") &&
-    !commandBlock.includes("--config ./wrangler.jsonc")
-  ) {
-    throw new Error(
-      "POLICY: release-critical wrangler versions deploy commands must pin ./wrangler.jsonc.",
+const allowedVersionDeployConfigPins = [
+  "--config ./wrangler.jsonc",
+  '--config "$KNOWN_GOOD_CONFIG"',
+];
+
+for (const [documentName, commandDocument] of [
+  ["deployment", deploymentSource],
+  ["rollback", rollbackSource],
+  ["release", releaseSource],
+]) {
+  for (const segment of commandDocument.split("```bash\n").slice(1)) {
+    const commandBlock = segment.split("\n```", 1)[0] ?? "";
+    if (!commandBlock.includes("wrangler versions deploy")) continue;
+
+    const hasApprovedConfigPin = allowedVersionDeployConfigPins.some((pin) =>
+      commandBlock.includes(pin),
     );
+
+    if (!hasApprovedConfigPin) {
+      throw new Error(
+        `POLICY: release-critical wrangler versions deploy commands in ${documentName} must pin either ./wrangler.jsonc or the exact KNOWN_GOOD_CONFIG.`,
+      );
+    }
   }
 }
 
@@ -421,8 +467,36 @@ const forbiddenPatterns = [
   { pattern: /\bimportScripts\s*\(/, name: "importScripts()" },
   { pattern: /\bWebSocket\s*\(/, name: "WebSocket()" },
   { pattern: /\bimport\s*\(/, name: "dynamic import()" },
-  { pattern: /\bconsole\.(?:log|info|warn|error|debug)\s*\(/, name: "custom application logging" },
 ];
+
+function containsConsoleCapability(sourceText) {
+  return /\bconsole\b/.test(sourceText);
+}
+
+for (const fixture of [
+  `console.log("x");`,
+  `console.trace("x");`,
+  `console["log"]("x");`,
+  `const c = console; c.log("x");`,
+  `const { log } = console; log("x");`,
+  `globalThis["console"].log("x");`,
+  `const text = "console.log";`,
+  `// console.trace("x")\nconst value = 1;`,
+]) {
+  if (!containsConsoleCapability(fixture)) {
+    throw new Error("POLICY: strict console-token regression fixture was not rejected.");
+  }
+}
+
+for (const fixture of [
+  `const consoleValue = 1;`,
+  `const consoles = [] as string[];`,
+  `const value = 1;`,
+]) {
+  if (containsConsoleCapability(fixture)) {
+    throw new Error("POLICY: strict console-token guard rejected a non-token substring.");
+  }
+}
 
 function containsForbiddenFetchReference(source, allowWorkerEntrypointMethod) {
   if (!allowWorkerEntrypointMethod) {
@@ -542,6 +616,12 @@ async function walk(directory) {
 const srcDirectory = fileURLToPath(new URL("src/", root));
 for (const file of await walk(srcDirectory)) {
   const source = await readFile(file, "utf8");
+
+  if (containsConsoleCapability(source)) {
+    throw new Error(
+      `POLICY: forbidden standalone console token found in production source: ${file}`,
+    );
+  }
 
   for (const { pattern, name } of forbiddenPatterns) {
     if (pattern.test(source)) {

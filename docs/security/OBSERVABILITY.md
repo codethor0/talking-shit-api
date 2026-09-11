@@ -21,6 +21,14 @@ Analytics Engine         not a production observability dependency
 Preview URLs             disabled
 ```
 
+## Non-versioned control-plane state
+
+Cloudflare Worker observability is non-versioned service state. `wrangler versions upload` does not apply it. `wrangler versions deploy` can synchronize it from the supplied configuration after creating the Worker deployment.
+
+Therefore an observability-changing release must preserve the exact prior signed `wrangler.jsonc` separately from the known-good Worker version ID. Candidate code is first staged at 0 percent with the known-good configuration. The reviewed observability settings are synchronized only after a separate human control-plane gate.
+
+Worker-version rollback alone does not restore the previous observability configuration. Use the dual-anchor failback procedure in `docs/security/ROLLBACK.md`.
+
 ## Free-plan guardrail
 
 As reviewed on 2026-09-11, Cloudflare documents Workers Free at 200,000 observability events per day with three-day retention.
@@ -42,7 +50,39 @@ Invocation logs and traces are platform telemetry. Application code must not add
 - arbitrary request bodies;
 - user-supplied identifiers.
 
-Request query strings are redacted from platform logs and traces. The API accepts no arbitrary user text; query values are bounded to documented categories, levels, and count controls.
+Request query strings are redacted from platform logs and traces. The API accepts no arbitrary user text; documented query values are bounded to categories, levels, and count controls. Unrecognized query strings can still reach Cloudflare before application validation, so platform redaction must be verified independently of application allowlisting.
+
+## Synthetic query-redaction verification
+
+After the reviewed observability configuration is synchronized and while the candidate remains at 0 percent, perform a bounded redaction test before production promotion.
+
+Generate a unique non-sensitive canary. It must contain no credential, personal data, customer data, or other sensitive value because a failed redaction test can intentionally expose the canary to short-retention telemetry.
+
+Example:
+
+```bash
+CANARY="TSAPI_REDACTION_$(uuidgen | tr -d '-')"
+printf 'CANARY=%s\n' "$CANARY"
+```
+
+Send bounded requests that include the canary only in the query string. Capture request timestamps and `cf-ray` response headers for correlation, but do not save full request URLs in long-lived files.
+
+Because Workers Logs and traces are sampled, continue only until the canary window contains at least one sampled Workers Log and at least one sampled trace that can be correlated by time, path, or Ray ID. Stay below the project's rate-limit and abuse boundaries.
+
+Inspect both telemetry surfaces. The gate passes only when:
+
+```text
+sampled Workers Log exists for the canary window
+sampled trace exists for the canary window
+cleartext canary is absent from the log
+cleartext canary is absent from the trace
+request URL does not expose the query value
+trace URL/query attributes do not expose the query value
+```
+
+Absence without a sampled record is inconclusive.
+
+If the canary appears in cleartext anywhere, stop release progression and restore the known-good non-versioned configuration before debugging forward.
 
 ## Query Builder learning views
 
@@ -113,7 +153,7 @@ Analytics Engine as a production dependency
 third-party telemetry vendors
 ```
 
-Budget alerts are not treated as hard spending caps. The primary billing control is remaining on Workers Free and refusing paid-only product dependencies.
+Budget alerts are not treated as hard spending caps. The primary billing control is remaining designed for Workers Free and refusing paid-only product dependencies.
 
 ## Verification
 
@@ -128,4 +168,4 @@ npx --no-install wrangler secret list --config ./wrangler.jsonc --format json
 npx --no-install wrangler deployments status --config ./wrangler.jsonc --json
 ```
 
-Observability configuration changes follow the normal candidate upload, exact-version smoke, human promotion, convergence, production smoke, and stability process.
+Observability configuration changes follow the dual-anchor process in `docs/security/DEPLOYMENT.md`: candidate upload, zero-percent staging with the known-good configuration, exact-version smoke, separate human non-versioned settings gate, redaction verification, human promotion, convergence, production smoke, and stability.

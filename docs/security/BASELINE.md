@@ -71,6 +71,9 @@ The release path must retain:
 - a full ordinary production smoke only after sustained convergence passes;
 - a final post-smoke stability window that fails on any reappearance of the previous service version;
 - exact-ID non-interactive failback readiness before promotion;
+- for releases that change non-versioned Cloudflare settings, an exact known-good `wrangler.jsonc` snapshot retained from the signed prior release;
+- zero-percent candidate staging performed with the known-good configuration before any new non-versioned settings are synchronized;
+- failback that restores both the known-good Worker version and known-good non-versioned settings;
 - no long-lived Cloudflare deployment credential in GitHub Actions.
 
 Package scripts must not contain production traffic-shifting `wrangler deploy`, `wrangler versions deploy`, `wrangler rollback`, or `wrangler triggers deploy` commands. Production promotion and rollback remain explicit operator actions.

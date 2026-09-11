@@ -22,7 +22,7 @@ Production source code has zero runtime dependencies and no outbound `fetch()` c
 
 ## Bounded native observability
 
-Cloudflare-native observability is enabled as a deliberate learning and operations capability while preserving the small runtime boundary. Workers Logs use a 25 percent head sampling rate and redact request query strings from platform logs and traces. Workers traces use a 1 percent head sampling rate. Preview URLs remain disabled.
+Cloudflare-native observability is enabled as a deliberate learning and operations capability while preserving the small runtime boundary. Workers Logs use a 25 percent head sampling rate and redact request query strings from platform logs and traces. Workers traces use a 1 percent head sampling rate. Preview URLs remain disabled. Wrangler treats observability as non-versioned Worker service state: `versions upload` does not apply it, while `versions deploy` can synchronize it from the selected configuration. Worker-version rollback alone therefore does not restore a previous observability setting.
 
 The application does not add custom console logging. No external log or trace destination is configured. Workers Logpush, Tail Workers, Smart Placement, Analytics Engine, and third-party OpenTelemetry export are not part of this production boundary.
 
@@ -93,7 +93,7 @@ The expected result is an empty list. A newly added secret is a security-boundar
 
 ## Deployment verification
 
-Before any production traffic change, record the active Worker deployment and the exact known-good Worker version ID:
+Before any production traffic change, record the active Worker deployment, the exact known-good Worker version ID, and, when non-versioned settings are changing, the exact known-good `wrangler.jsonc` from the signed prior release:
 
 ```bash
 npx --no-install wrangler deployments status --config ./wrangler.jsonc --json
