@@ -4,6 +4,11 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
+- Harden release provenance with an exact signed-main clean-tree preflight, explicit Wrangler configuration pinning, and a guard against local config redirection.
+- Strengthen policy enforcement for outbound fetch aliases and package/service version drift, and add runtime-to-OpenAPI preflight consistency coverage.
+- Reject non-canonical batch count encodings such as trailing line terminators while preserving the existing one-to-five bound.
+- Clarify that the in-Worker rate limiter does not shield the Cloudflare plan-level request allowance and that the IP-hash namespace is intentionally public rather than secret.
+
 - Hardened post-release deployment documentation to require sustained version convergence, repeated production stability checks, and exact-ID non-interactive failback for scripted recovery.
 - Polished the repository landing page with an embedded terminal demo, GitHub Sponsors funding metadata, researcher testing boundaries, and a Cloudflare-specific launch security checklist.
 

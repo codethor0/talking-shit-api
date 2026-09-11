@@ -129,12 +129,13 @@ export function validateBatchRequest(url: URL): BatchValidationResult {
     return { ...selection, count: DEFAULT_BATCH_COUNT };
   }
 
-  if (!/^[1-9]\d*$/.test(countValue)) {
-    return invalid("Count must be a whole number within the allowed range.");
-  }
-
   const count = Number(countValue);
-  if (!Number.isSafeInteger(count) || count < MIN_BATCH_COUNT || count > MAX_BATCH_COUNT) {
+  if (
+    !Number.isSafeInteger(count) ||
+    String(count) !== countValue ||
+    count < MIN_BATCH_COUNT ||
+    count > MAX_BATCH_COUNT
+  ) {
     return invalid("Count must be a whole number within the allowed range.");
   }
 

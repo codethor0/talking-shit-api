@@ -15,13 +15,14 @@
     "policy": "node scripts/policy-check.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p test/tsconfig.json",
     "test": "vitest run",
-    "build:check": "rm -rf .build && wrangler deploy --dry-run --outdir .build",
+    "build:check": "rm -rf .build && wrangler deploy --dry-run --config ./wrangler.jsonc --outdir .build",
     "audit": "npm audit --audit-level=high",
     "verify": "npm run policy && npm run lint && npm run types && npm run typecheck && npm test && npm run shell:check && npm run build:check && npm run deps:policy && npm run audit",
     "deps:policy": "node scripts/dependency-policy.mjs",
     "shell:check": "bash -n scripts/smoke.sh",
-    "deployment:state": "wrangler deployments status --json && wrangler versions list --json",
-    "candidate:upload": "npm run verify && npm audit signatures && wrangler versions upload"
+    "release:preflight": "node scripts/release-preflight.mjs",
+    "deployment:state": "wrangler deployments status --config ./wrangler.jsonc --json && wrangler versions list --config ./wrangler.jsonc --json",
+    "candidate:upload": "npm run release:preflight && npm run verify && npm audit signatures && npm run release:preflight && wrangler versions upload --config ./wrangler.jsonc"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",

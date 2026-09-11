@@ -53,7 +53,7 @@ describe("bounded batch endpoint", () => {
   });
 
   it("rejects malformed and out-of-range counts", async () => {
-    for (const count of ["0", "6", "1.5", "01", "nope"]) {
+    for (const count of ["0", "6", "1.5", "01", "1%0A", "nope"]) {
       const response = await handleRequest(
         new Request(`https://example.com/v1/batch?count=${count}`),
         allowEnv,

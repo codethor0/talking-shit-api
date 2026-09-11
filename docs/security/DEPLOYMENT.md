@@ -35,10 +35,13 @@ git switch main
 git pull --ff-only origin main
 git status --short
 
+export EXPECTED_RELEASE_COMMIT="<exact-reviewed-release-commit>"
+npm run release:preflight
 npm ci --no-fund --no-audit
 npm run verify
 npm audit signatures
 git diff --check
+npm run release:preflight
 ```
 
 Verify the `main` commit signature and signed release tag before any production traffic change.
@@ -70,17 +73,17 @@ The repository intentionally provides a candidate-upload command but no direct p
 Example:
 
 ```bash
-npm run candidate:upload -- \
+EXPECTED_RELEASE_COMMIT="<exact-reviewed-release-commit>" npm run candidate:upload -- \
   --tag "v0.6.1-rc.1" \
   --message "Talking Shit API v0.6.1 release candidate"
 ```
 
-`wrangler versions upload` creates a Worker version without deploying that version to production traffic.
+`wrangler versions upload` creates a Worker version without deploying that version to production traffic. The package script runs the release preflight before verification and again immediately before upload, and it passes `--config ./wrangler.jsonc` explicitly so a local Wrangler config redirect cannot substitute a different deployment configuration.
 
 Immediately run:
 
 ```bash
-npx --no-install wrangler versions list --json
+npx --no-install wrangler versions list --config ./wrangler.jsonc --json
 ```
 
 Identify the new version by its exact tag/message and record its Worker version ID. Do not select a candidate only because it is the newest entry.
@@ -98,6 +101,7 @@ Create a deployment containing the known-good version at 100% and the candidate 
 
 ```bash
 npx --no-install wrangler versions deploy \
+  --config ./wrangler.jsonc \
   "${KNOWN_GOOD_VERSION_ID}@100%" \
   "${CANDIDATE_VERSION_ID}@0%" \
   -y \
@@ -109,7 +113,7 @@ This changes deployment metadata but does not intentionally route normal product
 Confirm the deployment contains exactly the expected version IDs and percentages:
 
 ```bash
-npx --no-install wrangler deployments status --json
+npx --no-install wrangler deployments status --config ./wrangler.jsonc --json
 ```
 
 Stop on any mismatch.
@@ -158,6 +162,7 @@ Promotion is a separate explicit command:
 
 ```bash
 npx --no-install wrangler versions deploy \
+  --config ./wrangler.jsonc \
   "${CANDIDATE_VERSION_ID}@100%" \
   -y \
   --message "promote reviewed release candidate"
@@ -200,6 +205,7 @@ For scripted or non-interactive failback, prefer an exact version deployment:
 
 ```bash
 npx --no-install wrangler versions deploy \
+  --config ./wrangler.jsonc \
   "${KNOWN_GOOD_VERSION_ID}@100%" \
   -y \
   --message "failback: production verification failed"
