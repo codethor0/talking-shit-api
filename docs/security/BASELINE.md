@@ -20,7 +20,10 @@ The production service must remain one Cloudflare Worker with:
 - request URL length capped at 2048 application characters;
 - Cloudflare native rate limiting;
 - stable non-reflecting error responses;
-- persisted Workers Logs explicitly disabled;
+- Workers invocation logs enabled with 25 percent head sampling;
+- Workers traces enabled with 1 percent head sampling;
+- no custom application logging or external telemetry destinations;
+- request query strings redacted from Workers Logs and traces;
 - Worker preview URLs explicitly disabled.
 
 Any change to this list requires human boundary review. A new runtime dependency, secret, persistence mechanism, authenticated operation, arbitrary-text input, or outbound integration also requires an ADR before implementation.
@@ -29,9 +32,9 @@ Any change to this list requires human boundary review. A new runtime dependency
 
 Application code does not store or intentionally log client addresses. The connecting address is read transiently only to derive the rate-limit key.
 
-Persisted Workers Logs are disabled in `wrangler.jsonc`. Preview URLs are disabled so old and candidate Worker versions do not gain extra public routes by default.
+Workers Logs are enabled in `wrangler.jsonc` with 25 percent head sampling and invocation logs enabled. Workers traces are enabled with 1 percent head sampling. Preview URLs remain disabled so old and candidate Worker versions do not gain extra public routes by default.
 
-Do not enable logging, tracing, analytics bindings, or preview URLs as an ad hoc debugging step. Treat those as privacy and attack-surface changes requiring review.
+Application code must not add custom console logging, telemetry exporters, analytics bindings, or request-identity fields without a new privacy review. Changes to sampling rates, persistence, trace behavior, or preview URLs require human review.
 
 ## Repository and supply-chain baseline
 

@@ -16,6 +16,12 @@ As reviewed on 2026-09-10, Cloudflare documents these Workers Free limits:
 
 The application is designed to remain well below CPU and memory limits during normal operation.
 
+## Observability quota boundary
+
+Workers Logs on the Free plan are currently documented at 200,000 events per day with three-day retention. The production configuration samples invocation logs at 25 percent and traces at 1 percent. Cloudflare documents that, beginning October 1, 2026, trace spans share the Workers observability event quota.
+
+Observability must fail by sampling or retention limits before the project accepts a paid-plan dependency. Do not upgrade the Workers plan, enable paid Logpush, or add an external telemetry vendor merely to preserve diagnostic history for this non-critical service.
+
 ## Abuse limitation
 
 The current rate limiter allows 120 requests per 60 seconds per derived client key, but Cloudflare documents Worker rate-limit counters as local to a Cloudflare location and intentionally permissive/eventually consistent.

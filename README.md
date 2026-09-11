@@ -104,7 +104,8 @@ The joke is the output. The architecture is deliberately not a joke.
 - Strict allowlisted input validation with duplicate-parameter rejection and bounded URL length.
 - Native Cloudflare rate limiting keyed from a hashed client address.
 - `Cache-Control: no-store`, wildcard credential-free CORS, and defensive response headers.
-- Preview URLs and persisted Workers observability disabled in source configuration.
+- Preview URLs disabled; native Workers Logs sampled at 25% and traces sampled at 1% for bounded production observability.
+- No custom application logging or external telemetry export destinations; request query strings are redacted from platform logs and traces.
 - Signed commits, protected `main`, read-only CI, CodeQL, dependency review, private vulnerability reporting, and scheduled supply-chain verification.
 
 The architecture is documented in `docs/ARCHITECTURE.md`. The threat model is in `docs/THREAT_MODEL.md`. Operational security guidance is indexed in `docs/security/README.md`.
