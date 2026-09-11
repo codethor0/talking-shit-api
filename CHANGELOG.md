@@ -4,6 +4,8 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
+## 0.6.2 - 2026-09-10
+
 - Harden release provenance with an exact signed-main clean-tree preflight, explicit Wrangler configuration pinning, and a guard against local config redirection.
 - Strengthen policy enforcement for outbound fetch aliases and package/service version drift, and add runtime-to-OpenAPI preflight consistency coverage.
 - Reject non-canonical batch count encodings such as trailing line terminators while preserving the existing one-to-five bound.
