@@ -65,9 +65,11 @@ CANARY="TSAPI_REDACTION_$(uuidgen | tr -d '-')"
 printf 'CANARY=%s\n' "$CANARY"
 ```
 
-Send bounded requests that include the canary only in the query string. Capture request timestamps and `cf-ray` response headers for correlation, but do not save full request URLs in long-lived files.
+Send bounded requests that include the canary only in the query string. For every canary request, capture the response `cf-ray` value and a narrow timestamp window, but do not save full request URLs in long-lived files.
 
-Because Workers Logs and traces are sampled, continue only until the canary window contains at least one sampled Workers Log and at least one sampled trace that can be correlated by time, path, or Ray ID. Stay below the project's rate-limit and abuse boundaries.
+A sampled record counts as evidence only when its Cloudflare Ray ID matches a captured `cf-ray` value and its timestamp falls inside the corresponding narrow request window. Path-only or time-only correlation is not sufficient. Cloudflare Ray IDs are not treated as globally unique, so the gate uses Ray ID plus the timestamp window together.
+
+Because Workers Logs and traces are sampled, continue only until there is at least one persisted Workers Log and at least one persisted root trace with exact-Ray-ID correlation. Stay below the project's rate-limit and abuse boundaries. If exact-Ray-ID evidence never appears within the bounded test window, the gate is inconclusive and production promotion remains blocked.
 
 Inspect both telemetry surfaces. The gate passes only when:
 
@@ -80,7 +82,7 @@ request URL does not expose the query value
 trace URL/query attributes do not expose the query value
 ```
 
-Absence without a sampled record is inconclusive.
+Absence without an exact-Ray-ID sampled record is inconclusive. Real-time Logs can be useful operationally, but they are not the sole proof for this persistence/redaction gate.
 
 If the canary appears in cleartext anywhere, stop release progression and restore the known-good non-versioned configuration before debugging forward.
 

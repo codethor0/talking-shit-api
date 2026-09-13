@@ -161,16 +161,37 @@ for (const [name, document, fragments] of [
       "non-versioned",
       "KNOWN_GOOD_CONFIG",
       "Human non-versioned settings gate",
+      "live control-plane baseline",
+      "exact-Ray-ID",
       "query-string redaction",
     ],
   ],
-  ["rollback", rollbackSource, ["non-versioned", "KNOWN_GOOD_CONFIG", "Dual-anchor failback"]],
+  [
+    "rollback",
+    rollbackSource,
+    [
+      "non-versioned",
+      "KNOWN_GOOD_CONFIG",
+      "Dual-anchor failback",
+      "pre-release control-plane baseline",
+    ],
+  ],
   [
     "observability",
     observabilityGuideSource,
-    ["Non-versioned control-plane state", "Synthetic query-redaction verification", "inconclusive"],
+    [
+      "Non-versioned control-plane state",
+      "Synthetic query-redaction verification",
+      "exact-Ray-ID",
+      "cf-ray",
+      "inconclusive",
+    ],
   ],
-  ["release", releaseSource, ["non-versioned", "KNOWN_GOOD_CONFIG", "redaction verification"]],
+  [
+    "release",
+    releaseSource,
+    ["non-versioned", "KNOWN_GOOD_CONFIG", "live control-plane baseline", "redaction verification"],
+  ],
 ]) {
   for (const fragment of fragments) {
     if (!document.includes(fragment)) {

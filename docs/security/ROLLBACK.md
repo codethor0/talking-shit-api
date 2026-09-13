@@ -35,7 +35,9 @@ git show "${KNOWN_GOOD_RELEASE_TAG}:wrangler.jsonc" > "$KNOWN_GOOD_CONFIG"
 shasum -a 256 "$KNOWN_GOOD_CONFIG"
 ```
 
-Record the source tag and hash. Do not deploy if either recovery anchor cannot be identified exactly.
+Record the source tag and hash. Before any release control-plane mutation, also retain the observed pre-release control-plane baseline independently of Git. The signed configuration is the intended recovery source; the observed baseline proves what was actually live. Stop if the two disagree until drift is reconciled separately.
+
+Do not deploy if either recovery anchor or the pre-release control-plane baseline cannot be identified exactly.
 
 Do not rely on `wrangler rollback` without an explicit version ID because Cloudflare can otherwise select a previously uploaded version rather than the reviewed rollback target.
 
@@ -77,7 +79,7 @@ First confirm deployment state contains exactly the expected known-good Worker v
 npx --no-install wrangler deployments status --config ./wrangler.jsonc --json
 ```
 
-For a dual-anchor failback, also verify through the Cloudflare control plane that the non-versioned settings match the recorded known-good configuration.
+For a dual-anchor failback, also verify through the Cloudflare control plane that the non-versioned settings match both the recorded known-good configuration and the observed pre-release control-plane baseline.
 
 Then require sustained observations of the expected known-good service version. Do not treat one matching health response as proof that every request path has converged.
 

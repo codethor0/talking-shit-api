@@ -95,7 +95,11 @@ shasum -a 256 "$KNOWN_GOOD_CONFIG"
 
 Record the tag and hash. Do not reconstruct the old configuration manually. Keep the temporary file until the release is complete or failback is no longer required.
 
-Stop if the known-good Worker version or required known-good configuration cannot be identified exactly.
+Before the first `wrangler versions deploy` command, capture the live control-plane baseline independently of Git. Use the Cloudflare dashboard or the Worker Script Settings API and record the current observability settings, Logpush state, and Tail Worker consumers in the release evidence. The signed prior `wrangler.jsonc` is the intended recovery source, but it is not proof that the live control plane has not drifted.
+
+The live control-plane baseline must match the expected prior-release state before staging. If it does not, stop and reconcile the drift as a separate reviewed change. Do not let a release command silently normalize unexpected control-plane state.
+
+Stop if the known-good Worker version, required known-good configuration, or live control-plane baseline cannot be identified exactly.
 
 ## 3. Upload a candidate without production traffic
 
@@ -149,7 +153,9 @@ Confirm the deployment contains exactly the expected version IDs and percentages
 npx --no-install wrangler deployments status --config ./wrangler.jsonc --json
 ```
 
-Stop on any mismatch.
+Re-read the live script-level control-plane state after zero-percent staging. It must still match the pre-stage live control-plane baseline. A correct 100/0 traffic split alone does not prove that non-versioned state was preserved.
+
+Stop on any deployment or control-plane mismatch.
 
 ## 5. Target the exact zero-percent candidate
 
@@ -201,7 +207,9 @@ If the command, traffic split, or non-versioned state is unexpected, restore bot
 
 Follow `docs/security/OBSERVABILITY.md`.
 
-Use only a generated, non-sensitive canary because the purpose of the test is to prove that it is not persisted. Capture request timing and Cloudflare Ray IDs without retaining full request URLs.
+Use only a generated, non-sensitive canary because the purpose of the test is to prove that it is not persisted. For every canary request, capture the response `cf-ray` value and a narrow timestamp window without retaining the full request URL.
+
+A telemetry record counts as canary evidence only when its Cloudflare Ray ID matches a captured `cf-ray` value and its timestamp falls inside the corresponding narrow request window. Path-only or time-only correlation is not sufficient. Cloudflare Ray IDs are not treated as globally unique, so use the Ray ID together with the timestamp window.
 
 Success requires:
 
@@ -213,7 +221,7 @@ no cleartext canary value in the sampled trace
 no unexpected query value in URL or query attributes
 ```
 
-Because logs and traces are sampled, zero search results without a corresponding sampled record are inconclusive. Send only a bounded number of canary requests and remain below the project's rate-limit and abuse boundaries.
+Because logs and traces are sampled, zero search results without an exact-Ray-ID sampled record are inconclusive. Send only a bounded number of canary requests and remain below the project's rate-limit and abuse boundaries. Do not use Real-time Logs as the sole evidence for this persistence/redaction gate; verify the persisted Workers Log and persisted trace surfaces.
 
 Stop and restore the known-good configuration if redaction is not demonstrated.
 
