@@ -11,12 +11,22 @@ The source configuration requires:
 - Worker name `talking-shit-api`;
 - compatibility flags `no_nodejs_compat` and `no_nodejs_compat_v2`;
 - `preview_urls: false`;
-- persisted Workers observability disabled;
+- native Workers Logs enabled with 25 percent head sampling and invocation logs enabled;
+- native Workers traces enabled with 1 percent head sampling;
+- no custom application logging or external telemetry destinations;
 - one native rate-limit binding at 120 requests per 60 seconds;
 - no declared application secrets;
 - no database, KV, R2, D1, Durable Object, queue, AI, or other stateful runtime binding.
 
 Production source code has zero runtime dependencies and no outbound `fetch()` capability.
+
+## Bounded native observability
+
+Cloudflare-native observability is enabled as a deliberate learning and operations capability while preserving the small runtime boundary. Workers Logs use a 25 percent head sampling rate and redact request query strings from platform logs and traces. Workers traces use a 1 percent head sampling rate. Preview URLs remain disabled. Wrangler treats observability as non-versioned Worker service state: `versions upload` does not apply it, while `versions deploy` can synchronize it from the selected configuration. Worker-version rollback alone therefore does not restore a previous observability setting.
+
+The application does not add custom console logging. No external log or trace destination is configured. Workers Logpush, Tail Workers, Smart Placement, Analytics Engine, and third-party OpenTelemetry export are not part of this production boundary.
+
+On the Workers Free plan, Workers Logs are currently documented at 200,000 events per day with three-day retention. Tracing is free during the current beta period and Cloudflare documents that trace spans will share the Workers observability event quota beginning October 1, 2026. Sampling rates must be reviewed before any pricing or quota change is accepted.
 
 The application hashes the Cloudflare-provided client address before using it as the application rate-limit key. Raw client addresses are not persisted by the application.
 
@@ -83,7 +93,7 @@ The expected result is an empty list. A newly added secret is a security-boundar
 
 ## Deployment verification
 
-Before any production traffic change, record the active Worker deployment and the exact known-good Worker version ID:
+Before any production traffic change, record the active Worker deployment, the exact known-good Worker version ID, and, when non-versioned settings are changing, the exact known-good `wrangler.jsonc` from the signed prior release:
 
 ```bash
 npx --no-install wrangler deployments status --config ./wrangler.jsonc --json
@@ -103,7 +113,8 @@ Before a public launch:
 - No Global API Key is exposed in shell configuration, repository files, CI, or logs.
 - Worker secret list is empty.
 - Preview URLs remain disabled.
-- Persisted Workers observability remains disabled.
+- Workers Logs remain enabled at 25 percent head sampling and traces remain enabled at 1 percent head sampling.
+- No custom application logging or external telemetry destination is present.
 - Production deployment contains exactly the reviewed Worker version at 100 percent traffic.
 - The full public smoke suite passes.
 - The known-good failback Worker version ID is recorded.
