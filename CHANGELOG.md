@@ -4,6 +4,12 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
+## 0.7.0 - 2026-09-13
+
+- Enable bounded Cloudflare-native Workers invocation logs at 25 percent head sampling and traces at 1 percent head sampling, with request query-string redaction and no custom application request logging.
+- Treat observability as non-versioned Cloudflare service state with independent live control-plane drift checks, a separate human settings gate, zero-percent candidate staging, and dual-anchor failback for Worker version plus configuration.
+- Require synthetic query-redaction verification using exact Cloudflare Ray ID plus a narrow timestamp window across persisted Workers Logs and persisted root traces; absence without sampled evidence remains inconclusive.
+- Keep preview URLs disabled and preserve zero runtime dependencies, zero application secrets, zero outbound runtime calls, and no external telemetry destinations, paid Workers Logpush, Tail Worker consumers, Smart Placement, or Analytics Engine observability dependency.
 - Refresh the landing page and operational documentation for the current v0.6.2 production state, generic release examples, and exact Wrangler configuration pinning.
 
 ## 0.6.2 - 2026-09-10
