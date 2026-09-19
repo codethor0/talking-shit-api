@@ -3,10 +3,16 @@ import { headResponse, jsonResponse, optionsResponse } from "./http";
 import { OPENAPI_DOCUMENT } from "./openapi";
 import { enforceRateLimit } from "./rate-limit";
 import { getCatalogStats } from "./stats";
-import { API_VERSION, type AppEnv, CATEGORIES, LEVELS, SERVICE_VERSION } from "./types";
+import {
+  API_VERSION,
+  type AppEnv,
+  CATEGORIES,
+  LEVELS,
+  MAX_URL_LENGTH,
+  SERVICE_VERSION,
+} from "./types";
 import { validateBatchRequest, validateRoastRequest, validateSurpriseRequest } from "./validation";
 
-const MAX_URL_LENGTH = 2048;
 const ALLOWED_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 const PUBLIC_PATHS = new Set([
   "/",

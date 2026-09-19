@@ -84,7 +84,9 @@ describe("adversarial HTTP boundary", () => {
     const text = await response.text();
 
     expect(response.status).toBe(400);
-    expect(text).toContain('"message":"Unknown category."');
+    expect(text).toContain(
+      '"message":"Unknown category. Expected one of: general, code, debugging, deploy, meetings, security, git, oncall."',
+    );
     expect(text).not.toContain("%D1%96");
   });
 
@@ -102,7 +104,7 @@ describe("adversarial HTTP boundary", () => {
     expect(response.status).toBe(400);
     expect(body.error).toEqual({
       code: "INVALID_REQUEST",
-      message: "Count must be a whole number within the allowed range.",
+      message: "Count must be a whole number from 1 to 5.",
     });
   });
 

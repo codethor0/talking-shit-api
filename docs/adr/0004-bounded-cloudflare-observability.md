@@ -1,4 +1,4 @@
-# ADR 0003: Bounded Cloudflare Observability
+# ADR 0004: Bounded Cloudflare Observability
 
 Status: Accepted
 Date: 2026-09-11

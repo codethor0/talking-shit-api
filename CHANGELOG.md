@@ -4,6 +4,11 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
+- Make the OpenAPI contract tool-ready: stable `operationId` values, operation and parameter descriptions, and JSON Schema response bodies for every success and error envelope, verified against live handler output by a dependency-free structural schema test.
+- Make validation errors self-correcting by naming the allowed categories, levels, query parameters, and batch count bounds; messages are built only from static allowlists and still never reflect rejected input.
+- Add a local, never-deployed agent lab (`lab/`) that converts the OpenAPI contract into Claude tools and traces every model tool call, HTTP request, and recovery step. Transport failures are returned to the model as tool errors, an unreachable API or invalid `--tool-choice` fails with a clear message, and the trace file is written even when a run fails.
+- Share one URL length constant between routing and validation, remove the test-only `selectSurpriseRoast` helper, and renumber the bounded observability ADR to 0004 to resolve a duplicate ADR number.
+
 ## 0.7.0 - 2026-09-13
 
 - Enable bounded Cloudflare-native Workers invocation logs at 25 percent head sampling and traces at 1 percent head sampling, with request query-string redaction and no custom application request logging.

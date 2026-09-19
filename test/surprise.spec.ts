@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { handleRequest } from "../src/app";
 import { ROASTS } from "../src/content/roasts";
-import { selectConstrainedSurpriseRoast, selectSurpriseRoast } from "../src/engine";
+import { selectConstrainedSurpriseRoast } from "../src/engine";
 import { type AppEnv, CATEGORIES, LEVELS } from "../src/types";
 
 const allowEnv: AppEnv = {
@@ -16,7 +16,7 @@ describe("surprise roast", () => {
   it("selects category, level, and roast from the curated catalog", () => {
     const draws = [1, 2, 3];
 
-    const result = selectSurpriseRoast((length) => {
+    const result = selectConstrainedSurpriseRoast(undefined, undefined, (length) => {
       const next = draws.shift();
       if (next === undefined) {
         throw new Error("unexpected random draw");
@@ -141,6 +141,8 @@ describe("surprise roast", () => {
   });
 
   it("fails if the random source returns an out-of-range dimension", () => {
-    expect(() => selectSurpriseRoast(() => 999)).toThrow(RangeError);
+    expect(() => selectConstrainedSurpriseRoast(undefined, undefined, () => 999)).toThrow(
+      RangeError,
+    );
   });
 });

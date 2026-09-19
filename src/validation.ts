@@ -5,12 +5,22 @@ import {
   LEVELS,
   type Level,
   MAX_BATCH_COUNT,
+  MAX_URL_LENGTH,
   MIN_BATCH_COUNT,
 } from "./types";
 
-const MAX_URL_LENGTH = 2048;
-const ROAST_ALLOWED_QUERY_KEYS = new Set(["category", "level"]);
-const BATCH_ALLOWED_QUERY_KEYS = new Set(["category", "level", "count"]);
+const ROAST_ALLOWED_QUERY_KEYS: ReadonlySet<string> = new Set(["category", "level"]);
+const BATCH_ALLOWED_QUERY_KEYS: ReadonlySet<string> = new Set(["category", "level", "count"]);
+
+// Error messages name the allowlisted values so automated clients can self-correct.
+// They are built only from static constants and never reflect rejected input.
+export const UNKNOWN_CATEGORY_MESSAGE = `Unknown category. Expected one of: ${CATEGORIES.join(", ")}.`;
+export const UNKNOWN_LEVEL_MESSAGE = `Unknown level. Expected one of: ${LEVELS.join(", ")}.`;
+export const INVALID_COUNT_MESSAGE = `Count must be a whole number from ${MIN_BATCH_COUNT} to ${MAX_BATCH_COUNT}.`;
+
+export function unknownQueryParameterMessage(allowedQueryKeys: ReadonlySet<string>): string {
+  return `Unknown query parameter. Allowed parameters: ${[...allowedQueryKeys].join(", ")}.`;
+}
 
 type InvalidValidationResult = {
   ok: false;
@@ -54,7 +64,7 @@ function validateQueryShape(
 
   for (const key of url.searchParams.keys()) {
     if (!allowedQueryKeys.has(key)) {
-      return invalid("Unknown query parameter.");
+      return invalid(unknownQueryParameterMessage(allowedQueryKeys));
     }
   }
 
@@ -80,11 +90,11 @@ function validateSelectionRequest(
   const levelValue = url.searchParams.get("level") ?? "spicy";
 
   if (!isCategory(categoryValue)) {
-    return invalid("Unknown category.");
+    return invalid(UNKNOWN_CATEGORY_MESSAGE);
   }
 
   if (!isLevel(levelValue)) {
-    return invalid("Unknown level.");
+    return invalid(UNKNOWN_LEVEL_MESSAGE);
   }
 
   return { ok: true, category: categoryValue, level: levelValue };
@@ -104,11 +114,11 @@ export function validateSurpriseRequest(url: URL): SurpriseValidationResult {
   const levelValue = url.searchParams.get("level");
 
   if (categoryValue !== null && !isCategory(categoryValue)) {
-    return invalid("Unknown category.");
+    return invalid(UNKNOWN_CATEGORY_MESSAGE);
   }
 
   if (levelValue !== null && !isLevel(levelValue)) {
-    return invalid("Unknown level.");
+    return invalid(UNKNOWN_LEVEL_MESSAGE);
   }
 
   return {
@@ -136,7 +146,7 @@ export function validateBatchRequest(url: URL): BatchValidationResult {
     count < MIN_BATCH_COUNT ||
     count > MAX_BATCH_COUNT
   ) {
-    return invalid("Count must be a whole number within the allowed range.");
+    return invalid(INVALID_COUNT_MESSAGE);
   }
 
   return { ...selection, count };
