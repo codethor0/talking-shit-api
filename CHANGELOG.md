@@ -8,6 +8,7 @@ Notable project changes are recorded here. The API follows semantic versioning o
 - Expose `Retry-After` to cross-origin browser clients with `Access-Control-Expose-Headers`, so a web app can read the 60-second back-off on a 429.
 - Document the `Retry-After` response header on every 429, serialize the static OpenAPI document once instead of per request, and record the local agent lab boundary in ADR 0005 (proposed).
 - Keep `scripts/smoke.sh` runnable against the known-good production Worker by not asserting new-version-only behavior; query rejection stays covered by the test suite. The lab now stops with a clear message when a target contract has no operations to turn into tools, and validates `--max-turns` strictly.
+- Remove the unreferenced `scripts/bootstrap-local.sh` scaffold, which re-initialized Git and rewrote the lockfile, and document the `lab/` boundary and the request-boundary invariant in `docs/ARCHITECTURE.md`.
 - Lint and format `lab/` with the rest of the repository.
 - Make the OpenAPI contract tool-ready: stable `operationId` values, operation and parameter descriptions, and JSON Schema response bodies for every success and error envelope, verified against live handler output by a dependency-free structural schema test.
 - Make validation errors self-correcting by naming the allowed categories, levels, query parameters, and batch count bounds; messages are built only from static allowlists and still never reflect rejected input.

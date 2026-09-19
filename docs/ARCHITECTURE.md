@@ -51,6 +51,11 @@ There is no database, queue, object storage, remote model, outbound API, or seco
 5. No arbitrary user-supplied roast target exists in V1.
 6. No application secrets exist in V1.
 7. Rate limiting is an abuse brake, not authentication or billing.
+8. Routes that take no parameters reject any query string; routes that take parameters allowlist keys and values and reject unknown or duplicate keys.
+
+## Outside the Worker bundle
+
+`lab/` is a local learning harness that calls the Anthropic Messages API and the target API from a developer machine. It is never imported by, bundled into, or deployed with the Worker, adds no dependencies, and is excluded from the source-capability policy scan of `src/` by design. Its boundary is recorded in `docs/adr/0005-local-agent-lab.md`. `scripts/` holds verification and release tooling and is likewise not part of the bundle.
 
 ## Scaling model
 
