@@ -1,5 +1,5 @@
 export const API_VERSION = "v1" as const;
-export const SERVICE_VERSION = "0.7.0" as const;
+export const SERVICE_VERSION = "0.8.0" as const;
 
 export const CATEGORIES = [
   "general",
