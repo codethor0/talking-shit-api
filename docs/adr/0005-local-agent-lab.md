@@ -17,6 +17,7 @@ Keep a local agent lab under `lab/` with these boundaries:
 - It adds no npm dependencies. It uses only Node built-ins and the platform `fetch`.
 - It reads `ANTHROPIC_API_KEY` from the environment only. The key is never written to disk, to traces, to source, or to the repository.
 - It sends only what the operator types as a prompt plus the public OpenAPI-derived tool definitions. The Worker still accepts no free-form text, so nothing a model produces can reach the production API except a category, level, and count that the strict allowlists validate.
+- Requests go only to the configured base URL. Paths from the target's OpenAPI document must be plain absolute paths, and every request is checked against the base URL's origin before it is sent, so a hostile target cannot redirect the lab to another host.
 - Traces are written to `lab/traces/`, which is git-ignored. They contain the prompt, model output, and API responses, and no credentials.
 - It is linted and formatted with the rest of the repository, and the repository text policy (no emoji) applies to it.
 

@@ -2,7 +2,7 @@
 
 A local harness for watching a Claude model discover the Talking Shit API, decide which operation to call, build the arguments, and recover from errors.
 
-The lab is a learning tool. It is not part of the Worker bundle, is never deployed, adds no npm dependencies, and reads the Anthropic API key only from the environment. Nothing under `lab/` changes the production security boundary.
+The lab is a learning tool. It only sends requests to the `--base-url` you give it, and refuses a target whose OpenAPI document contains anything other than plain absolute paths. It is not part of the Worker bundle, is never deployed, adds no npm dependencies, and reads the Anthropic API key only from the environment. Nothing under `lab/` changes the production security boundary.
 
 ## How it works
 
