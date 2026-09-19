@@ -1,6 +1,6 @@
 # ADR 0006: Free-tier operating boundary
 
-Status: Proposed
+Status: Accepted
 Date: 2026-09-18
 
 ## Context
