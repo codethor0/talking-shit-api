@@ -67,7 +67,7 @@ if (options.help) {
 }
 
 const baseUrl = options["base-url"].replace(/\/+$/, "");
-const maxTurns = Number.parseInt(options["max-turns"], 10);
+const maxTurns = /^\d{1,2}$/.test(options["max-turns"]) ? Number(options["max-turns"]) : Number.NaN;
 if (!Number.isSafeInteger(maxTurns) || maxTurns < 1 || maxTurns > 20) {
   fail("--max-turns must be a whole number from 1 to 20.");
 }
@@ -127,7 +127,12 @@ async function loadTools() {
   if (!response.ok) {
     fail(`could not load ${baseUrl}/openapi.json (HTTP ${response.status}).`);
   }
-  const spec = await response.json();
+  let spec;
+  try {
+    spec = await response.json();
+  } catch {
+    fail(`${baseUrl}/openapi.json did not return JSON. Is --base-url the API root?`);
+  }
   const tools = [];
   const routes = new Map();
 
@@ -152,6 +157,14 @@ async function loadTools() {
       input_schema: { type: "object", properties, required, additionalProperties: false },
     });
     routes.set(operation.operationId, { path, parameterNames: Object.keys(properties) });
+  }
+
+  if (tools.length === 0) {
+    fail(
+      `${baseUrl}/openapi.json (v${spec.info?.version}) has no GET operations with an operationId, ` +
+        "so there is nothing to turn into tools. Point --base-url at a build that includes the " +
+        "agent-friendly contract, such as npm run dev.",
+    );
   }
 
   return { tools, routes, specVersion: spec.info?.version };

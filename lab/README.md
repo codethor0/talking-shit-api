@@ -39,7 +39,7 @@ export ANTHROPIC_API_KEY=...   # never commit this
 node lab/agent-lab.mjs --prompt "roast my git habits, three of them, brutal"
 ```
 
-Use `--base-url https://talking-shit-api.codethor0.workers.dev` to point at production instead. Keep experiments low-volume; the production rate limit is 120 requests per minute per client.
+Use `--base-url https://talking-shit-api.codethor0.workers.dev` to point at production instead, once the deployed release includes the agent-friendly contract (`operationId` on every operation). An older release has none, and the lab stops with a message saying so. Keep experiments low-volume; the production rate limit is 120 requests per minute per client.
 
 The model defaults to `ANTHROPIC_MODEL`, or the newest Sonnet model the Models API lists. Override it with `--model`.
 

@@ -1,5 +1,5 @@
 import { selectConstrainedSurpriseRoast, selectRoast, selectRoasts } from "./engine";
-import { headResponse, jsonResponse, optionsResponse } from "./http";
+import { headResponse, jsonResponse, optionsResponse, serializedJsonResponse } from "./http";
 import { OPENAPI_DOCUMENT } from "./openapi";
 import { enforceRateLimit } from "./rate-limit";
 import { getCatalogStats } from "./stats";
@@ -24,6 +24,7 @@ const PUBLIC_PATHS = new Set([
   "/v1/stats",
   "/openapi.json",
 ]);
+const OPENAPI_JSON = JSON.stringify(OPENAPI_DOCUMENT);
 // Routes that take no parameters reject any query string instead of silently ignoring it, so a
 // client that sends a parameter the route does not honor learns about it immediately.
 const QUERYLESS_PATHS = new Set([
@@ -148,7 +149,7 @@ async function route(request: Request, env: AppEnv): Promise<Response> {
     case "/v1/stats":
       return success(getCatalogStats());
     case "/openapi.json":
-      return jsonResponse(OPENAPI_DOCUMENT);
+      return serializedJsonResponse(OPENAPI_JSON);
     default:
       return errorResponse(404, "NOT_FOUND", "Route not found.");
   }

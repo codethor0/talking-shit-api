@@ -72,6 +72,35 @@ describe("OpenAPI contract", () => {
     }
   });
 
+  it("documents the Retry-After header that the runtime sends on 429", async () => {
+    const denyEnv: AppEnv = {
+      RATE_LIMITER: {
+        async limit() {
+          return { success: false };
+        },
+      },
+    };
+    const response = await handleRequest(new Request("https://example.com/v1/health"), denyEnv);
+    const rateLimited = paths["/v1/health"]?.get.responses["429"] as
+      | { headers?: Record<string, { schema: { type: string; minimum: number } }> }
+      | undefined;
+    const documented = rateLimited?.headers?.["Retry-After"];
+
+    expect(documented).toBeDefined();
+    expect(response.status).toBe(429);
+    expect(documented?.schema.type).toBe("integer");
+    expect(Number(response.headers.get("Retry-After"))).toBeGreaterThanOrEqual(
+      documented?.schema.minimum ?? Number.POSITIVE_INFINITY,
+    );
+  });
+
+  it("serves the published document byte for byte", async () => {
+    const response = await handleRequest(new Request("https://example.com/openapi.json"), allowEnv);
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe(JSON.stringify(OPENAPI_DOCUMENT));
+  });
+
   it("documents bounded batch parameters", () => {
     const parameters = paths["/v1/batch"]?.get.parameters ?? [];
     const count = parameters.find((parameter) => parameter.name === "count");

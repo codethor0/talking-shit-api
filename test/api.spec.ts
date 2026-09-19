@@ -114,6 +114,7 @@ describe("Talking Shit API", () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("60");
+    expect(response.headers.get("Access-Control-Expose-Headers")).toBe("Retry-After");
   });
 
   it("fails closed when rate limiting is unavailable", async () => {

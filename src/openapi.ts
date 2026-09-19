@@ -21,6 +21,12 @@ const sharedFailureResponses = {
   "414": { description: "Request URL is too long", content: errorContent },
   "429": {
     description: "Rate limit exceeded. Wait for the Retry-After interval before retrying.",
+    headers: {
+      "Retry-After": {
+        description: "Seconds to wait before retrying.",
+        schema: { type: "integer", minimum: 1 },
+      },
+    },
     content: errorContent,
   },
   "503": { description: "Rate limiter unavailable", content: errorContent },
