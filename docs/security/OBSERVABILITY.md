@@ -65,7 +65,7 @@ CANARY="TSAPI_REDACTION_$(uuidgen | tr -d '-')"
 printf 'CANARY=%s\n' "$CANARY"
 ```
 
-Send bounded requests that include the canary only in the query string. For every canary request, capture the response `cf-ray` value and a narrow timestamp window, but do not save full request URLs in long-lived files.
+Send bounded requests that include the canary only in the query string. Prefer `/v1/roast`, which exercises the same code as real traffic. Since v0.8.0 the parameterless routes and any unknown query key return `400`; the platform records the request regardless, so a `400` is expected here and does not affect this gate. For every canary request, capture the response `cf-ray` value and a narrow timestamp window, but do not save full request URLs in long-lived files.
 
 A sampled record counts as evidence only when its Cloudflare Ray ID matches a captured `cf-ray` value and its timestamp falls inside the corresponding narrow request window. Path-only or time-only correlation is not sufficient. Cloudflare Ray IDs are not treated as globally unique, so the gate uses Ray ID plus the timestamp window together.
 

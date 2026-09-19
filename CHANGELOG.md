@@ -18,6 +18,7 @@ Tooling and guardrails:
 - Fail the policy check on stale documentation: a backticked repository path that does not exist, a relative Markdown link to a missing file, or a README anchor (Markdown or HTML) with no matching heading. The changelog is exempt as a historical record.
 - Keep `scripts/smoke.sh` runnable against the known-good production Worker by not asserting new-version-only behavior; query rejection stays covered by the test suite.
 - Lint and format `lab/` with the rest of the repository.
+- Fix the release convergence procedure so it no longer tells operators to make probes unique with a query string, which the parameterless routes now reject with `400`: probes use a fresh request with a unique `X-Probe-Id` header instead. Clarify that the redaction canary should target `/v1/roast`, and fail the policy check if an operational document puts a query string on a parameterless route.
 
 Tests and documentation:
 

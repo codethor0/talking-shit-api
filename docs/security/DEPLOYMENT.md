@@ -261,8 +261,20 @@ After promotion, first confirm `wrangler deployments status --json` reports exac
 
 Do not treat one matching HTTP response or one matching health/OpenAPI pair as proof of convergence. Production verification requires a bounded sustained window:
 
-1. Send unique, cache-busting requests to both `/v1/health` and `/openapi.json`.
+1. Send each probe as a separate request on a fresh connection to both `/v1/health` and `/openapi.json`, with a unique `X-Probe-Id` request header so each probe can be told apart and matched to its `cf-ray` value.
 2. Send request headers that disable cache reuse, such as `Cache-Control: no-cache, no-store, max-age=0` and `Pragma: no-cache`.
+
+Do not make probes unique by appending a query string. From v0.8.0 the parameterless routes reject any query string with `400 INVALID_REQUEST`, so a probe like that would fail against the candidate while an older Worker still returns `200`, which reads as a failed convergence and can wrongly trigger failback. Responses already send `Cache-Control: no-store`, so a query string adds no cache protection.
+
+Example probe:
+
+```bash
+curl -s \
+  -H "X-Probe-Id: $(uuidgen)" \
+  -H 'Cache-Control: no-cache, no-store, max-age=0' \
+  -H 'Pragma: no-cache' \
+  "https://talking-shit-api.codethor0.workers.dev/v1/health"
+```
 3. Require at least 10 consecutive paired observations where `/v1/health` reports the expected `meta.service_version` and `/openapi.json` reports the expected `info.version`.
 4. Reset the consecutive-success streak to zero if either endpoint reports the previous version or any other unexpected version.
 5. After sustained convergence passes, run the complete smoke suite without a Worker version override.
