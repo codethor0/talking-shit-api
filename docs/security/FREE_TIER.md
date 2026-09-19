@@ -83,6 +83,19 @@ What it checks:
 
 Last verified 2026-09-18 against production v0.7.0: all twelve checks passed.
 
+Dashboard facts, read by the maintainer from the Worker settings page on 2026-09-19:
+
+| Setting | Observed |
+| --- | --- |
+| Log and trace sampling | Logs 25 percent, traces 1 percent, matching `wrangler.jsonc` |
+| Telemetry exports | None ("No destinations available") |
+| Smart Placement | Off |
+| Cron triggers, queue consumers, email routing | None configured |
+| Runtime variables and secrets | None listed |
+| Compatibility flags | `no_nodejs_compat`, `no_nodejs_compat_v2` |
+
+That capture was text, so it does not show whether the invocation-logs and persistence toggles are switched on. The plan has not been recorded yet: it is read from the Plans page and must read Free.
+
 Two facts cannot be read with Wrangler and need a person in the Cloudflare dashboard, which the script links: the plan (Workers and Pages, then Plans, must read Free) and the live non-versioned observability settings (the Worker's settings must show the sampling rates in `wrangler.jsonc`). Reading the plan through the API needs a separate token with the Billing Read permission, which this project does not create. Record both facts when a release changes them.
 
 ## Adding a free resource
