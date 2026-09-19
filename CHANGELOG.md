@@ -4,6 +4,8 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
+- Reject query strings on every parameterless route (`/`, `/v1/health`, `/v1/categories`, `/v1/stats`, `/openapi.json`) with `400 INVALID_REQUEST`, matching what `/v1/stats` already did, so a client that sends a parameter a route ignores is told instead of silently succeeding. Clients that append cache-busting or tracking parameters to these routes must stop doing so.
+- Lint and format `lab/` with the rest of the repository.
 - Make the OpenAPI contract tool-ready: stable `operationId` values, operation and parameter descriptions, and JSON Schema response bodies for every success and error envelope, verified against live handler output by a dependency-free structural schema test.
 - Make validation errors self-correcting by naming the allowed categories, levels, query parameters, and batch count bounds; messages are built only from static allowlists and still never reflect rejected input.
 - Add a local, never-deployed agent lab (`lab/`) that converts the OpenAPI contract into Claude tools and traces every model tool call, HTTP request, and recovery step. Transport failures are returned to the model as tool errors, an unreachable API or invalid `--tool-choice` fails with a clear message, and the trace file is written even when a run fails.

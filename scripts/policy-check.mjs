@@ -297,8 +297,8 @@ const expectedPackageScripts = {
   dev: "wrangler dev",
   types: "wrangler types worker-configuration.d.ts",
   format:
-    "biome check --write src test scripts vitest.config.ts package.json tsconfig.json biome.json wrangler.jsonc",
-  lint: "biome ci src test scripts vitest.config.ts package.json tsconfig.json biome.json wrangler.jsonc",
+    "biome check --write src test scripts lab vitest.config.ts package.json tsconfig.json biome.json wrangler.jsonc",
+  lint: "biome ci src test scripts lab vitest.config.ts package.json tsconfig.json biome.json wrangler.jsonc",
   policy: "node scripts/policy-check.mjs",
   typecheck: "tsc --noEmit -p tsconfig.json && tsc --noEmit -p test/tsconfig.json",
   test: "vitest run",

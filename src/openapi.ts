@@ -43,6 +43,13 @@ const invalidQueryResponse = {
   content: errorContent,
 } as const;
 
+const noQueryResponse = {
+  description: "Query parameters are not accepted on this route",
+  content: errorContent,
+} as const;
+
+const noQueryHeadResponse = { description: "Query parameters are not accepted" } as const;
+
 const categoryParameterDescription =
   "Topic of the roast. Pick the category closest to what the user is talking about.";
 const levelParameterDescription =
@@ -77,12 +84,14 @@ export const OPENAPI_DOCUMENT = {
       get: {
         operationId: "getServiceIndex",
         summary: "Service index",
-        description: "Returns the service name, a short description, and the public endpoints.",
+        description:
+          "Returns the service name, a short description, and the public endpoints. Accepts no parameters.",
         responses: {
           "200": {
             description: "Service metadata and public endpoints",
             content: jsonContent("ServiceIndexResponse"),
           },
+          "400": noQueryResponse,
           ...sharedFailureResponses,
         },
       },
@@ -90,6 +99,7 @@ export const OPENAPI_DOCUMENT = {
         summary: "Service index headers",
         responses: {
           "200": { description: "Service index headers" },
+          "400": noQueryHeadResponse,
           ...sharedHeadFailureResponses,
         },
       },
@@ -102,9 +112,11 @@ export const OPENAPI_DOCUMENT = {
       get: {
         operationId: "getHealth",
         summary: "Health check",
-        description: "Confirms the service is up and reports the running service version.",
+        description:
+          "Confirms the service is up and reports the running service version. Accepts no parameters.",
         responses: {
           "200": { description: "Service is healthy", content: jsonContent("HealthResponse") },
+          "400": noQueryResponse,
           ...sharedFailureResponses,
         },
       },
@@ -112,6 +124,7 @@ export const OPENAPI_DOCUMENT = {
         summary: "Health check headers",
         responses: {
           "200": { description: "Health check headers" },
+          "400": noQueryHeadResponse,
           ...sharedHeadFailureResponses,
         },
       },
@@ -125,9 +138,10 @@ export const OPENAPI_DOCUMENT = {
         operationId: "listCategories",
         summary: "List supported categories and levels",
         description:
-          "Lists every valid category and intensity level. Call this first if unsure which values the other operations accept.",
+          "Lists every valid category and intensity level. Call this first if unsure which values the other operations accept. Accepts no parameters.",
         responses: {
           "200": { description: "Supported values", content: jsonContent("CategoriesResponse") },
+          "400": noQueryResponse,
           ...sharedFailureResponses,
         },
       },
@@ -135,6 +149,7 @@ export const OPENAPI_DOCUMENT = {
         summary: "Category headers",
         responses: {
           "200": { description: "Category response headers" },
+          "400": noQueryHeadResponse,
           ...sharedHeadFailureResponses,
         },
       },
@@ -295,10 +310,7 @@ export const OPENAPI_DOCUMENT = {
             description: "Current catalog totals by category and intensity",
             content: jsonContent("StatsResponse"),
           },
-          "400": {
-            description: "Query parameters are not accepted",
-            content: errorContent,
-          },
+          "400": noQueryResponse,
           ...sharedFailureResponses,
         },
       },
@@ -306,7 +318,7 @@ export const OPENAPI_DOCUMENT = {
         summary: "Catalog statistics response headers",
         responses: {
           "200": { description: "Catalog statistics response headers" },
-          "400": { description: "Query parameters are not accepted" },
+          "400": noQueryHeadResponse,
           ...sharedHeadFailureResponses,
         },
       },
@@ -319,12 +331,13 @@ export const OPENAPI_DOCUMENT = {
       get: {
         operationId: "getOpenApiDocument",
         summary: "OpenAPI document",
-        description: "Returns this OpenAPI 3.1 contract.",
+        description: "Returns this OpenAPI 3.1 contract. Accepts no parameters.",
         responses: {
           "200": {
             description: "OpenAPI 3.1 document",
             content: { "application/json": { schema: { type: "object" } } },
           },
+          "400": noQueryResponse,
           ...sharedFailureResponses,
         },
       },
@@ -332,6 +345,7 @@ export const OPENAPI_DOCUMENT = {
         summary: "OpenAPI document headers",
         responses: {
           "200": { description: "OpenAPI document headers" },
+          "400": noQueryHeadResponse,
           ...sharedHeadFailureResponses,
         },
       },

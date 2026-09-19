@@ -102,8 +102,10 @@ describe("OpenAPI contract", () => {
     expect(paths["/v1/roast"]?.head.responses).toHaveProperty("400");
     expect(paths["/v1/surprise"]?.get.responses).toHaveProperty("400");
     expect(paths["/v1/surprise"]?.head.responses).toHaveProperty("400");
-    expect(paths["/v1/stats"]?.get.responses).toHaveProperty("400");
-    expect(paths["/v1/stats"]?.head.responses).toHaveProperty("400");
+    for (const path of ["/", "/v1/health", "/v1/categories", "/v1/stats", "/openapi.json"]) {
+      expect(paths[path]?.get.responses).toHaveProperty("400");
+      expect(paths[path]?.head.responses).toHaveProperty("400");
+    }
 
     for (const path of expectedPaths) {
       expect(paths[path]?.options.responses).toHaveProperty("204");
@@ -262,6 +264,9 @@ describe("OpenAPI contract for automated clients", () => {
       ["/v1/roast", "/v1/roast?category=kubernetes"],
       ["/v1/batch", "/v1/batch?count=6"],
       ["/v1/surprise", "/v1/surprise?level=nuclear"],
+      ["/", "/?verbose=1"],
+      ["/v1/health", "/v1/health?verbose=1"],
+      ["/v1/categories", "/v1/categories?category=git"],
       ["/v1/stats", "/v1/stats?verbose=1"],
     ];
 

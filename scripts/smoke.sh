@@ -111,6 +111,7 @@ expect_status "batch count rejected" 400 "$BASE_URL/v1/batch?count=6"
 expect_status "invalid surprise category" 400 "$BASE_URL/v1/surprise?category=not-a-category"
 expect_status "surprise unknown query" 400 "$BASE_URL/v1/surprise?wat=nope"
 expect_status "stats query rejected" 400 "$BASE_URL/v1/stats?detail=all"
+expect_status "health query rejected" 400 "$BASE_URL/v1/health?detail=all"
 expect_status "POST rejected" 405 -X POST "$BASE_URL/v1/roast"
 expect_status "unknown OPTIONS" 404 -X OPTIONS "$BASE_URL/not-a-route"
 
