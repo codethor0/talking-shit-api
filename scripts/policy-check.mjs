@@ -210,6 +210,30 @@ for (const fragment of [
   }
 }
 
+// Operational documents must never tell an operator to put a query string on a parameterless
+// route: those routes reject one with 400, which would read as a failed release probe.
+const parameterlessRouteWithQuery = /\/(?:v1\/health|v1\/categories|v1\/stats|openapi\.json)\?/;
+
+if (
+  !parameterlessRouteWithQuery.test("https://example.com/v1/health?probe=1") ||
+  parameterlessRouteWithQuery.test("https://example.com/v1/roast?category=git")
+) {
+  throw new Error("POLICY: parameterless-route query regression fixture behaved incorrectly.");
+}
+
+for (const [name, document] of [
+  ["deployment", deploymentSource],
+  ["rollback", rollbackSource],
+  ["observability", observabilityGuideSource],
+  ["release", releaseSource],
+]) {
+  if (parameterlessRouteWithQuery.test(document)) {
+    throw new Error(
+      `POLICY: ${name} documentation puts a query string on a parameterless route, which returns 400.`,
+    );
+  }
+}
+
 for (const [name, document, fragments] of [
   [
     "deployment",
