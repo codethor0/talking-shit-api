@@ -1,5 +1,5 @@
 import { readdir, readFile } from "node:fs/promises";
-import { extname, join } from "node:path";
+import { dirname, extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = new URL("../", import.meta.url);
@@ -677,6 +677,94 @@ for (const file of await walkRepositoryText(fileURLToPath(root))) {
     throw new Error(
       `POLICY: emoji characters are forbidden in repository code and documentation: ${file}`,
     );
+  }
+}
+
+// Documentation currency: every repository path a document mentions in backticks, every relative
+// Markdown link, and every README anchor must resolve. CHANGELOG.md is a historical record and is
+// exempt because it legitimately names files that no longer exist. See DOCTRINE section 24.
+const documentedPathPattern =
+  /`((?:\.\.\/)?(?:docs|src|scripts|lab|test|\.github)\/[\w./@-]+\.[a-z]+|(?:\.\.\/)?[A-Z][A-Z_-]+\.md)`/g;
+const relativeLinkPattern = /\]\((?!https?:|mailto:|#)([^)#\s]+)(#[^)]*)?\)/g;
+
+async function walkAllFiles(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      if (!ignoredRepositoryDirectories.has(entry.name)) files.push(...(await walkAllFiles(path)));
+    } else if (entry.isFile()) {
+      files.push(path);
+    }
+  }
+  return files;
+}
+
+function brokenDocumentReferences(documentPath, source, existingFiles, rootPath) {
+  const directory = dirname(documentPath);
+  const problems = [];
+  const exists = (candidate) => existingFiles.has(resolve(candidate));
+  const bareNameExists = (name) =>
+    [...existingFiles].some((file) => file.endsWith(`${sep}${name}`) && file.startsWith(rootPath));
+
+  for (const match of source.matchAll(documentedPathPattern)) {
+    const reference = match[1];
+    if (
+      !exists(resolve(directory, reference)) &&
+      !exists(resolve(rootPath, reference)) &&
+      !bareNameExists(reference)
+    ) {
+      problems.push(`path ${reference}`);
+    }
+  }
+
+  for (const match of source.matchAll(relativeLinkPattern)) {
+    if (!exists(resolve(directory, match[1]))) problems.push(`link ${match[1]}`);
+  }
+
+  return problems;
+}
+
+const repositoryRoot = fileURLToPath(root);
+const existingFiles = new Set((await walkAllFiles(repositoryRoot)).map((file) => resolve(file)));
+
+if (
+  brokenDocumentReferences(
+    join(repositoryRoot, "docs", "fixture.md"),
+    "See `docs/definitely-missing.md` and [x](../nope/missing.md).",
+    existingFiles,
+    repositoryRoot,
+  ).length !== 2
+) {
+  throw new Error("POLICY: documentation reference regression fixture was not rejected.");
+}
+
+for (const file of await walkRepositoryText(repositoryRoot)) {
+  if (extname(file) !== ".md" || file === join(repositoryRoot, "CHANGELOG.md")) continue;
+  const problems = brokenDocumentReferences(
+    file,
+    await readFile(file, "utf8"),
+    existingFiles,
+    repositoryRoot,
+  );
+  if (problems.length > 0) {
+    throw new Error(`POLICY: broken documentation reference in ${file}: ${problems.join("; ")}`);
+  }
+}
+
+const readmeAnchors = new Set(
+  [...readmeSource.matchAll(/^#+\s+(.+)$/gm)].map((heading) =>
+    (heading[1] ?? "")
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-"),
+  ),
+);
+for (const match of readmeSource.matchAll(/(?:\]\(|href=")#([^)"]+)/g)) {
+  if (!readmeAnchors.has(match[1] ?? "")) {
+    throw new Error(`POLICY: README anchor #${match[1]} does not match any heading.`);
   }
 }
 

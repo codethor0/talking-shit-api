@@ -135,7 +135,7 @@ Tooling that exists to study, exercise, or demonstrate the service, such as the 
 
 ## 24. Documentation is plain and current
 
-Documentation and code use plain text with no emoji, and the policy check enforces it. Docs change in the same pull request as the behavior they describe. State facts with a review date when they depend on a vendor. A fact that cannot be verified is labeled as an assumption instead of written as truth.
+Documentation and code use plain text with no emoji, and the policy check enforces it. The policy check also fails when a document names a repository path that does not exist, links to a missing file, or points at a README anchor with no heading; the changelog is exempt as a historical record. Docs change in the same pull request as the behavior they describe. State facts with a review date when they depend on a vendor. A fact that cannot be verified is labeled as an assumption instead of written as truth.
 
 ## Reference baseline
 
