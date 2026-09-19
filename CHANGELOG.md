@@ -22,7 +22,7 @@ Tooling and guardrails:
 
 Tests and documentation:
 
-- Add a repeatable read-only account audit to `docs/security/FREE_TIER.md` that verifies the account holds only the Worker and its rate-limit binding, with the results from production v0.7.0.
+- Add `scripts/cloudflare-audit.mjs`, a read-only audit that verifies the account holds only the Worker and its rate-limit binding and that the live version matches `wrangler.jsonc`, and with `--open` opens the two dashboard pages that only a person can read. It uses Wrangler's own login, never reads or prints a token, and exits 1 on any failure. Results from production v0.7.0 are recorded in `docs/security/FREE_TIER.md`.
 - Add HTTP invariant property tests that assert bounded statuses, security headers, valid envelopes, no reflection of any request input, HEAD parity with GET, and fail-closed rate limiting across generated requests, plus full category and level coverage over HTTP.
 - Extend `docs/DOCTRINE.md` with sections 21 to 24 (cost is a security property, the contract is the product, learning tools stay outside the production boundary, plain current documentation), tighten the testing, privacy, and agent rules, and bring the release gate list in line with `npm run verify`.
 - Improve the repository page: a docs index (`docs/README.md`), a guide to studying an API call end to end with free tools (`docs/LEARNING.md`), a roast submission issue form, security and docs contact links, a social preview image, and README badges, navigation, and cost section. Document the `lab/` boundary and the request-boundary invariant in `docs/ARCHITECTURE.md`.
