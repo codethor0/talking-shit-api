@@ -114,6 +114,7 @@ describe("Talking Shit API", () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("60");
+    expect(response.headers.get("Access-Control-Expose-Headers")).toBe("Retry-After");
   });
 
   it("fails closed when rate limiting is unavailable", async () => {
@@ -187,5 +188,37 @@ describe("HTTP boundary hardening", () => {
 
     expect(response.status).toBe(414);
     expect(await response.text()).toBe("");
+  });
+
+  it.each(["/", "/v1/health", "/v1/categories", "/v1/stats", "/openapi.json"])(
+    "rejects query parameters on the parameterless route %s",
+    async (path) => {
+      const response = await handleRequest(
+        new Request(`https://example.com${path}?category=git`),
+        allowEnv,
+      );
+      const body = (await response.json()) as {
+        ok: boolean;
+        error: { code: string; message: string };
+      };
+
+      expect(response.status).toBe(400);
+      expect(body.ok).toBe(false);
+      expect(body.error).toEqual({
+        code: "INVALID_REQUEST",
+        message: "Query parameters are not supported for this route.",
+      });
+    },
+  );
+
+  it("still accepts an empty query string and CORS preflight on parameterless routes", async () => {
+    const empty = await handleRequest(new Request("https://example.com/v1/health?"), allowEnv);
+    const preflight = await handleRequest(
+      new Request("https://example.com/v1/health?x=1", { method: "OPTIONS" }),
+      allowEnv,
+    );
+
+    expect(empty.status).toBe(200);
+    expect(preflight.status).toBe(204);
   });
 });

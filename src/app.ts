@@ -1,12 +1,18 @@
 import { selectConstrainedSurpriseRoast, selectRoast, selectRoasts } from "./engine";
-import { headResponse, jsonResponse, optionsResponse } from "./http";
+import { headResponse, jsonResponse, optionsResponse, serializedJsonResponse } from "./http";
 import { OPENAPI_DOCUMENT } from "./openapi";
 import { enforceRateLimit } from "./rate-limit";
 import { getCatalogStats } from "./stats";
-import { API_VERSION, type AppEnv, CATEGORIES, LEVELS, SERVICE_VERSION } from "./types";
+import {
+  API_VERSION,
+  type AppEnv,
+  CATEGORIES,
+  LEVELS,
+  MAX_URL_LENGTH,
+  SERVICE_VERSION,
+} from "./types";
 import { validateBatchRequest, validateRoastRequest, validateSurpriseRequest } from "./validation";
 
-const MAX_URL_LENGTH = 2048;
 const ALLOWED_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 const PUBLIC_PATHS = new Set([
   "/",
@@ -15,6 +21,16 @@ const PUBLIC_PATHS = new Set([
   "/v1/roast",
   "/v1/batch",
   "/v1/surprise",
+  "/v1/stats",
+  "/openapi.json",
+]);
+const OPENAPI_JSON = JSON.stringify(OPENAPI_DOCUMENT);
+// Routes that take no parameters reject any query string instead of silently ignoring it, so a
+// client that sends a parameter the route does not honor learns about it immediately.
+const QUERYLESS_PATHS = new Set([
+  "/",
+  "/v1/health",
+  "/v1/categories",
   "/v1/stats",
   "/openapi.json",
 ]);
@@ -82,6 +98,14 @@ async function route(request: Request, env: AppEnv): Promise<Response> {
       : errorResponse(404, "NOT_FOUND", "Route not found.");
   }
 
+  if (QUERYLESS_PATHS.has(url.pathname) && url.searchParams.size > 0) {
+    return errorResponse(
+      400,
+      "INVALID_REQUEST",
+      "Query parameters are not supported for this route.",
+    );
+  }
+
   switch (url.pathname) {
     case "/":
       return success({
@@ -123,16 +147,9 @@ async function route(request: Request, env: AppEnv): Promise<Response> {
       return success(selectConstrainedSurpriseRoast(validation.category, validation.level));
     }
     case "/v1/stats":
-      if (url.searchParams.size > 0) {
-        return errorResponse(
-          400,
-          "INVALID_REQUEST",
-          "Query parameters are not supported for this route.",
-        );
-      }
       return success(getCatalogStats());
     case "/openapi.json":
-      return jsonResponse(OPENAPI_DOCUMENT);
+      return serializedJsonResponse(OPENAPI_JSON);
     default:
       return errorResponse(404, "NOT_FOUND", "Route not found.");
   }

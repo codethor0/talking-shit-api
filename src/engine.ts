@@ -70,9 +70,3 @@ export function selectConstrainedSurpriseRoast(
 
   return selectRoast(selectedCategory, selectedLevel, randomIndex);
 }
-
-export function selectSurpriseRoast(
-  randomIndex: (length: number) => number = cryptoRandomIndex,
-): Roast {
-  return selectConstrainedSurpriseRoast(undefined, undefined, randomIndex);
-}

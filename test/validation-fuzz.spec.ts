@@ -25,7 +25,8 @@ describe("request validation fuzzing", () => {
           expect(validateRoastRequest(url)).toEqual({
             ok: false,
             code: "INVALID_REQUEST",
-            message: "Unknown category.",
+            message:
+              "Unknown category. Expected one of: general, code, debugging, deploy, meetings, security, git, oncall.",
           });
         },
       ),
@@ -44,7 +45,7 @@ describe("request validation fuzzing", () => {
           expect(validateRoastRequest(url)).toEqual({
             ok: false,
             code: "INVALID_REQUEST",
-            message: "Unknown level.",
+            message: "Unknown level. Expected one of: mild, spicy, dark.",
           });
         },
       ),
@@ -64,7 +65,7 @@ describe("request validation fuzzing", () => {
           expect(validateRoastRequest(url)).toEqual({
             ok: false,
             code: "INVALID_REQUEST",
-            message: "Unknown query parameter.",
+            message: "Unknown query parameter. Allowed parameters: category, level.",
           });
         },
       ),
