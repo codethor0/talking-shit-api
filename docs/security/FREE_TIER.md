@@ -61,34 +61,29 @@ The Free plan allows 10 ms of CPU per invocation. A live `wrangler tail` of prod
 
 ## Verify the account matches the boundary
 
-These read-only commands check that the account holds nothing beyond the one Worker and its rate-limit binding. Run them from a maintainer machine with an authenticated Wrangler.
+One command runs the whole read-only audit. It uses the Wrangler login you already have (`npx wrangler login` opens a browser and asks you to click Allow), never reads or prints a token, calls no Cloudflare API itself, and changes nothing:
 
 ```bash
-npx --no-install wrangler kv namespace list
-npx --no-install wrangler d1 list --json
-npx --no-install wrangler r2 bucket list
-npx --no-install wrangler queues list
-npx --no-install wrangler vectorize list
-npx --no-install wrangler hyperdrive list
-npx --no-install wrangler secrets-store store list --remote
-npx --no-install wrangler secret list --config ./wrangler.jsonc --format json
-npx --no-install wrangler versions view "$LIVE_VERSION_ID" --config ./wrangler.jsonc --json
+node scripts/cloudflare-audit.mjs --open
 ```
 
-Expected results:
+`--open` also opens the two dashboard pages that only a person can read. Without it the script prints their links. It exits 1 if any check fails.
 
-| Command | Expected |
+What it checks:
+
+| Check | Expected |
 | --- | --- |
-| `kv namespace list`, `d1 list` | `[]` |
-| `r2 bucket list` | An error saying R2 is not enabled (code 10042). Enabling R2 is a billable-risk decision, see the catalog above |
-| `queues list`, `hyperdrive list`, `vectorize list` | No entries |
-| `secrets-store store list --remote` | No stores |
-| `secret list` | `[]` |
-| `versions view` | A single `ratelimit` binding named `RATE_LIMITER`, a `fetch` handler, and the compatibility date and flags from `wrangler.jsonc` |
+| KV namespaces, D1 databases, Worker secrets | none |
+| R2 | not enabled on the account (API error 10042). Enabling R2 is a billable-risk decision, see the catalog above |
+| Vectorize, Secrets Store, Queues, Hyperdrive | none |
+| Deployment | exactly one Worker version at 100 percent |
+| Live bindings | only the `ratelimit` binding declared in `wrangler.jsonc` |
+| Compatibility date and flags | equal to `wrangler.jsonc` |
+| Handlers | `fetch` only |
 
-Last verified 2026-09-18 against production v0.7.0: every result matched.
+Last verified 2026-09-18 against production v0.7.0: all twelve checks passed.
 
-Two facts cannot be read with Wrangler and need the Cloudflare dashboard: the plan (Workers and Pages, then Plans, must read Free) and the live non-versioned observability settings (the Worker's Observability settings must show the sampling rates in `wrangler.jsonc`). Record both when a release changes them.
+Two facts cannot be read with Wrangler and need a person in the Cloudflare dashboard, which the script links: the plan (Workers and Pages, then Plans, must read Free) and the live non-versioned observability settings (the Worker's settings must show the sampling rates in `wrangler.jsonc`). Reading the plan through the API needs a separate token with the Billing Read permission, which this project does not create. Record both facts when a release changes them.
 
 ## Adding a free resource
 
