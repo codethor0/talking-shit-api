@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="t d">
+  <title id="t">Talking Shit API</title>
+  <desc id="d">Professional-grade shit talking for unprofessional developer moments. One Cloudflare Worker, zero runtime dependencies, free to run.</desc>
+  <rect width="1280" height="640" fill="#0d1117"/>
+  <rect x="0" y="0" width="1280" height="8" fill="#f38020"/>
+  <text x="80" y="170" font-family="Helvetica, Arial, sans-serif" font-size="84" font-weight="700" fill="#ffffff">Talking Shit API</text>
+  <text x="80" y="235" font-family="Helvetica, Arial, sans-serif" font-size="34" fill="#c9d1d9">Professional-grade shit talking for</text>
+  <text x="80" y="280" font-family="Helvetica, Arial, sans-serif" font-size="34" fill="#c9d1d9">unprofessional developer moments.</text>
+  <rect x="80" y="340" width="1120" height="150" rx="14" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+  <text x="112" y="392" font-family="Menlo, Consolas, monospace" font-size="26" fill="#7ee787">$ curl -s '.../v1/roast?category=code&amp;level=dark'</text>
+  <text x="112" y="440" font-family="Menlo, Consolas, monospace" font-size="24" fill="#c9d1d9">"This code is a digital crime scene and git blame</text>
+  <text x="112" y="472" font-family="Menlo, Consolas, monospace" font-size="24" fill="#c9d1d9">is the autopsy report."</text>
+  <text x="80" y="570" font-family="Helvetica, Arial, sans-serif" font-size="28" fill="#8b949e">One Cloudflare Worker  |  Zero runtime dependencies  |  Free to run</text>
+</svg>

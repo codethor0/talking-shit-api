@@ -25,6 +25,7 @@ const observabilityGuideSource = await readFile(
   "utf8",
 );
 const releaseSource = await readFile(new URL("docs/RELEASE.md", root), "utf8");
+const freeTierSource = await readFile(new URL("docs/security/FREE_TIER.md", root), "utf8");
 const securityAuditSource = await readFile(
   new URL(".github/workflows/security-audit.yml", root),
   "utf8",
@@ -151,6 +152,62 @@ if (
   throw new Error(
     "POLICY: Analytics Engine is not an approved production observability dependency.",
   );
+}
+
+// Free-tier boundary: every top-level wrangler.jsonc key is reviewed. A new binding (KV, D1, R2,
+// AI, queues, Durable Objects, and so on) must change this allowlist and docs/security/FREE_TIER.md
+// in the same reviewed pull request. See ADR 0006.
+const reviewedWranglerKeys = new Set([
+  "$schema",
+  "name",
+  "main",
+  "compatibility_date",
+  "compatibility_flags",
+  "workers_dev",
+  "preview_urls",
+  "observability",
+  "ratelimits",
+]);
+
+function unreviewedWranglerKeys(config) {
+  return Object.keys(config).filter((key) => !reviewedWranglerKeys.has(key));
+}
+
+for (const key of [
+  "kv_namespaces",
+  "d1_databases",
+  "r2_buckets",
+  "ai",
+  "queues",
+  "durable_objects",
+  "vectorize",
+  "hyperdrive",
+  "services",
+  "browser",
+  "triggers",
+  "route",
+  "analytics_engine_datasets",
+]) {
+  if (unreviewedWranglerKeys({ name: canonicalSlug, [key]: [] }).join() !== key) {
+    throw new Error(`POLICY: free-tier allowlist regression fixture did not reject ${key}.`);
+  }
+}
+
+if (unreviewedWranglerKeys(wranglerConfig).length > 0) {
+  throw new Error(
+    `POLICY: wrangler.jsonc keys are not on the reviewed free-tier allowlist: ${unreviewedWranglerKeys(wranglerConfig).join(", ")}. See docs/security/FREE_TIER.md.`,
+  );
+}
+
+for (const fragment of [
+  "no overage billing",
+  "Confirm the plan in the Cloudflare dashboard",
+  "Adding a free resource",
+  "reviewed key to the allowlist",
+]) {
+  if (!freeTierSource.includes(fragment)) {
+    throw new Error(`POLICY: free-tier documentation must retain control: ${fragment}`);
+  }
 }
 
 for (const [name, document, fragments] of [

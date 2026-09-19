@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/codethor0/talking-shit-api/security/advisories/new
+    about: Use GitHub Private Vulnerability Reporting. Do not open a public issue for a suspected vulnerability.
+  - name: Read the docs first
+    url: https://github.com/codethor0/talking-shit-api/blob/main/docs/README.md
+    about: Architecture, doctrine, threat model, and how to study an API call end to end.

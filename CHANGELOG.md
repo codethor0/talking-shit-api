@@ -4,6 +4,10 @@ Notable project changes are recorded here. The API follows semantic versioning o
 
 ## Unreleased
 
+- Enforce the free-tier boundary mechanically: the policy check now fails on any top-level `wrangler.jsonc` key outside a reviewed allowlist, with regression fixtures for KV, D1, R2, AI, queues, Durable Objects, and other bindings. Add `docs/security/FREE_TIER.md` (verified resource catalog, failure behavior at each limit, sampling headroom, adoption steps) and proposed ADR 0006.
+- Extend `docs/DOCTRINE.md` with sections 21 to 24 (cost is a security property, the contract is the product, learning tools stay outside the production boundary, plain current documentation), tighten the testing, privacy, and agent rules, and bring the release gate list in line with `npm run verify`.
+- Add HTTP invariant property tests that assert bounded statuses, security headers, valid envelopes, no reflection of any request input, HEAD parity with GET, and fail-closed rate limiting across generated requests, plus full category and level coverage over HTTP.
+- Improve the repository page: a docs index (`docs/README.md`), a guide to studying an API call end to end with free tools (`docs/LEARNING.md`), a roast submission issue form, security and docs contact links, a social preview image, and README badges, navigation, and cost section.
 - Reject query strings on every parameterless route (`/`, `/v1/health`, `/v1/categories`, `/v1/stats`, `/openapi.json`) with `400 INVALID_REQUEST`, matching what `/v1/stats` already did, so a client that sends a parameter a route ignores is told instead of silently succeeding. Clients that append cache-busting or tracking parameters to these routes must stop doing so.
 - Expose `Retry-After` to cross-origin browser clients with `Access-Control-Expose-Headers`, so a web app can read the 60-second back-off on a 429.
 - Document the `Retry-After` response header on every 429, serialize the static OpenAPI document once instead of per request, and record the local agent lab boundary in ADR 0005 (proposed).
