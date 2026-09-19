@@ -32,14 +32,16 @@ Stance values: **in use** is deployed today. **Candidate** may be proposed throu
 | Rate Limiting binding | No separate charge documented in the pages reviewed | Not stated | In use, 120 per 60 seconds |
 | Workers Logs | 200,000 events per day, 3-day retention | Writes stop, no overage charge | In use, 25 percent sampling |
 | Workers traces | Free during beta; from 2026-10-01 each span counts as one observability event against the Logs quota | Shares the Logs limit | In use, 1 percent sampling |
-| Workers KV | 100,000 reads, 1,000 writes and deletes per day, 1 GB | Operations fail | Candidate |
-| D1 | 5 million rows read, 100,000 rows written per day, 5 GB | Queries fail on Free since 2026-09-01 | Candidate |
-| Durable Objects | SQLite-backed only on Free; 100,000 requests and 13,000 GB-seconds per day | Operations fail | Candidate |
+| Workers KV | 100,000 reads per day, 1,000 writes, deletes, and lists per day, 1 GB | Operations fail | Candidate |
+| D1 | 5 million rows read, 100,000 rows written per day, 5 GB total, up to 10 databases | Queries fail on Free since 2026-09-01 | Candidate |
+| Durable Objects | SQLite-backed only on Free; 100,000 requests and 13,000 GB-seconds per day; SQL 5 million rows read, 100,000 rows written per day, 5 GB stored | Operations fail | Candidate |
 | Queues | 10,000 operations per day | Operations fail | Candidate |
 | Workers AI | 10,000 Neurons per day | Requests fail, paid plan needed to exceed | Excluded: ADR 0001 keeps an AI model out of production |
 | Workers Analytics Engine | 100,000 data points written, 10,000 read queries per day | Behavior at the limit is not documented; billing is announced for "the coming months" | Excluded until Cloudflare publishes Free-plan limit behavior and a billing date |
 | R2 | 10 GB-month, 1 million Class A, 10 million Class B operations per month | Overage handling on Free was not stated in the pages reviewed | Excluded until a hard-fail Free behavior is documented |
+| Cron Triggers | 5 per account | Not stated | Unused; the Worker has none |
 | Workers Logpush, Tail Workers | Not available on Free, or billable | Not applicable | Excluded by policy |
+| Containers, Pipelines, Email Sending | Not available on Free | Not applicable | Excluded |
 
 ## Sampling headroom
 
@@ -94,7 +96,9 @@ Dashboard facts, read by the maintainer from the Worker settings page on 2026-09
 | Runtime variables and secrets | None listed |
 | Compatibility flags | `no_nodejs_compat`, `no_nodejs_compat_v2` |
 
-That capture was text, so it does not show whether the invocation-logs and persistence toggles are switched on. The plan has not been recorded yet: it is read from the Plans page and must read Free.
+That capture was text, so it does not show whether the invocation-logs and persistence toggles are switched on.
+
+The Workers plans page was also captured as text on 2026-09-19. It lists the Free, Paid, and Enterprise comparison and agrees with the Free figures in the catalog above: 100,000 requests per day, 10 ms CPU, 50 subrequests, 100 Workers, 200,000 Workers Logs events per day, and the KV, D1, Durable Objects, Queues, Workers AI, and Vectorize allowances. It also shows Workers Analytics Engine priced at $0.25 per million data points on Paid, which confirms billing exists for it and keeps it excluded. That comparison does not say which plan is active, because the capture carries no current-plan marker. The plan has not been recorded yet: it is read from the Plans page and must read Free.
 
 Two facts cannot be read with Wrangler and need a person in the Cloudflare dashboard, which the script links: the plan (Workers and Pages, then Plans, must read Free) and the live non-versioned observability settings (the Worker's settings must show the sampling rates in `wrangler.jsonc`). Reading the plan through the API needs a separate token with the Billing Read permission, which this project does not create. Record both facts when a release changes them.
 
