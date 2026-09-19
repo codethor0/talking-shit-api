@@ -2,24 +2,32 @@
 
 Notable project changes are recorded here. The API follows semantic versioning once a change is released.
 
-## Unreleased
+## 0.8.0 - 2026-09-18
 
-- Enforce the free-tier boundary mechanically: the policy check now fails on any top-level `wrangler.jsonc` key outside a reviewed allowlist, with regression fixtures for KV, D1, R2, AI, queues, Durable Objects, and other bindings. Add `docs/security/FREE_TIER.md` (verified resource catalog, failure behavior at each limit, sampling headroom, adoption steps) and ADR 0006.
-- Extend `docs/DOCTRINE.md` with sections 21 to 24 (cost is a security property, the contract is the product, learning tools stay outside the production boundary, plain current documentation), tighten the testing, privacy, and agent rules, and bring the release gate list in line with `npm run verify`.
-- Fail the policy check on stale documentation: a backticked repository path that does not exist, a relative Markdown link to a missing file, or a README anchor (Markdown or HTML) with no matching heading. The changelog is exempt as a historical record.
-- Add HTTP invariant property tests that assert bounded statuses, security headers, valid envelopes, no reflection of any request input, HEAD parity with GET, and fail-closed rate limiting across generated requests, plus full category and level coverage over HTTP.
-- Improve the repository page: a docs index (`docs/README.md`), a guide to studying an API call end to end with free tools (`docs/LEARNING.md`), a roast submission issue form, security and docs contact links, a social preview image, and README badges, navigation, and cost section.
-- Reject query strings on every parameterless route (`/`, `/v1/health`, `/v1/categories`, `/v1/stats`, `/openapi.json`) with `400 INVALID_REQUEST`, matching what `/v1/stats` already did, so a client that sends a parameter a route ignores is told instead of silently succeeding. Clients that append cache-busting or tracking parameters to these routes must stop doing so.
+Client-visible changes:
+
+- Reject query strings on every parameterless route (`/`, `/v1/health`, `/v1/categories`, `/v1/stats`, `/openapi.json`) with `400 INVALID_REQUEST`, matching what `/v1/stats` already did, so a client that sends a parameter a route ignores is told instead of silently succeeding. Clients that append cache-busting or tracking parameters to these routes must stop doing so. An empty `?` and `OPTIONS` preflights are still accepted.
+- Make validation errors self-correcting by naming the allowed categories, levels, query parameters, and batch count bounds. The error `code` is unchanged, but the message text is longer, so a client that matches an exact old message string must update. Messages are built only from static allowlists and still never reflect rejected input.
+- Make the OpenAPI contract tool-ready: stable `operationId` values, operation and parameter descriptions, JSON Schema response bodies for every success and error envelope, a documented `400` on the parameterless routes, and the `Retry-After` header documented on every 429. A dependency-free structural schema test verifies live handler output against the published schemas.
 - Expose `Retry-After` to cross-origin browser clients with `Access-Control-Expose-Headers`, so a web app can read the 60-second back-off on a 429.
-- Document the `Retry-After` response header on every 429, serialize the static OpenAPI document once instead of per request, and record the local agent lab boundary in ADR 0005.
-- Keep `scripts/smoke.sh` runnable against the known-good production Worker by not asserting new-version-only behavior; query rejection stays covered by the test suite. The lab now stops with a clear message when a target contract has no operations to turn into tools, and validates `--max-turns` strictly.
-- Remove the unreferenced `scripts/bootstrap-local.sh` scaffold, which re-initialized Git and rewrote the lockfile, and document the `lab/` boundary and the request-boundary invariant in `docs/ARCHITECTURE.md`.
-- Harden the agent lab against a hostile target: it refuses any OpenAPI path that is not a plain absolute path, tolerates malformed path entries, and refuses any request that would leave the configured base URL. Defense in depth only: Node's `fetch` already rejects credentialed URLs, which blocked the `@host` shape.
+
+Tooling and guardrails:
+
+- Add a local, never-deployed agent lab (`lab/`, ADR 0005) that converts the OpenAPI contract into Claude tools and traces every model tool call, HTTP request, and recovery step. It returns transport failures to the model as tool errors, fails clearly on an unreachable API, an invalid `--tool-choice`, a non-JSON or operation-less contract, and a malformed `--max-turns`, writes its trace even when a run fails, and refuses a hostile target by accepting only plain absolute OpenAPI paths and never sending a request outside the configured base URL.
+- Enforce the free-tier boundary mechanically (ADR 0006, `docs/security/FREE_TIER.md`): the policy check fails on any top-level `wrangler.jsonc` key outside a reviewed allowlist, with regression fixtures for KV, D1, R2, AI, queues, Durable Objects, and other bindings.
+- Fail the policy check on stale documentation: a backticked repository path that does not exist, a relative Markdown link to a missing file, or a README anchor (Markdown or HTML) with no matching heading. The changelog is exempt as a historical record.
+- Keep `scripts/smoke.sh` runnable against the known-good production Worker by not asserting new-version-only behavior; query rejection stays covered by the test suite.
 - Lint and format `lab/` with the rest of the repository.
-- Make the OpenAPI contract tool-ready: stable `operationId` values, operation and parameter descriptions, and JSON Schema response bodies for every success and error envelope, verified against live handler output by a dependency-free structural schema test.
-- Make validation errors self-correcting by naming the allowed categories, levels, query parameters, and batch count bounds; messages are built only from static allowlists and still never reflect rejected input.
-- Add a local, never-deployed agent lab (`lab/`) that converts the OpenAPI contract into Claude tools and traces every model tool call, HTTP request, and recovery step. Transport failures are returned to the model as tool errors, an unreachable API or invalid `--tool-choice` fails with a clear message, and the trace file is written even when a run fails.
-- Share one URL length constant between routing and validation, remove the test-only `selectSurpriseRoast` helper, and renumber the bounded observability ADR to 0004 to resolve a duplicate ADR number.
+
+Tests and documentation:
+
+- Add HTTP invariant property tests that assert bounded statuses, security headers, valid envelopes, no reflection of any request input, HEAD parity with GET, and fail-closed rate limiting across generated requests, plus full category and level coverage over HTTP.
+- Extend `docs/DOCTRINE.md` with sections 21 to 24 (cost is a security property, the contract is the product, learning tools stay outside the production boundary, plain current documentation), tighten the testing, privacy, and agent rules, and bring the release gate list in line with `npm run verify`.
+- Improve the repository page: a docs index (`docs/README.md`), a guide to studying an API call end to end with free tools (`docs/LEARNING.md`), a roast submission issue form, security and docs contact links, a social preview image, and README badges, navigation, and cost section. Document the `lab/` boundary and the request-boundary invariant in `docs/ARCHITECTURE.md`.
+
+Housekeeping:
+
+- Serialize the static OpenAPI document once instead of per request, share one URL length constant between routing and validation, remove the test-only `selectSurpriseRoast` helper, remove the unreferenced `scripts/bootstrap-local.sh` scaffold, and renumber the bounded observability ADR to 0004 to resolve a duplicate ADR number.
 
 ## 0.7.0 - 2026-09-13
 

@@ -117,7 +117,7 @@ Validation errors name the allowed values, so a client that guesses wrong can co
     "code": "INVALID_REQUEST",
     "message": "Unknown category. Expected one of: general, code, debugging, deploy, meetings, security, git, oncall."
   },
-  "meta": { "api_version": "v1", "service_version": "0.7.0" }
+  "meta": { "api_version": "v1", "service_version": "0.8.0" }
 }
 ```
 
