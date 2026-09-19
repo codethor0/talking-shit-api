@@ -55,6 +55,10 @@ The span count is an assumption for a small Worker, not a Cloudflare figure. Che
 
 Headroom is large. Even at 100 percent log sampling the worst case is about 110,000 events per day, 55 percent of the quota. The reason sampling is 25 percent is privacy, not quota: ADR 0004 chose to retain a bounded sample of platform request metadata. Raising it is a privacy decision that requires an ADR update and a change to the pinned policy value, not a quota decision.
 
+## Observed CPU headroom
+
+The Free plan allows 10 ms of CPU per invocation. A live `wrangler tail` of production v0.7.0 on 2026-09-18 recorded `cpuTime` of 0 to 1 ms and `wallTime` of 1 to 2 ms for four requests covering a success, a validation error, and a 404. This is a small sample at whole-millisecond resolution, so read it as an order of magnitude, roughly a tenfold margin, not as a guarantee. Re-measure after a release that changes request handling.
+
 ## Adding a free resource
 
 A new binding is a one-way door under DOCTRINE section 18. Before the change:

@@ -102,11 +102,11 @@ Levels: `mild`, `spicy`, `dark`.
 
 Defaults are `general` and `spicy`. Batch count defaults to `3` and is capped at `5`. Surprise randomizes any omitted category or level.
 
-Routes that take no parameters (`/`, `/v1/health`, `/v1/categories`, `/v1/stats`, `/openapi.json`) reject any query string with `400 INVALID_REQUEST` instead of silently ignoring it. An empty `?` is accepted, and `OPTIONS` preflights are unaffected.
+Since v0.8.0, routes that take no parameters (`/`, `/v1/health`, `/v1/categories`, `/v1/stats`, `/openapi.json`) reject any query string with `400 INVALID_REQUEST` instead of silently ignoring it. An empty `?` is accepted, and `OPTIONS` preflights are unaffected.
 
 ## For agents and automated clients
 
-The OpenAPI contract is written to be turned directly into tools. Every `GET` operation has a stable `operationId` (`getRoast`, `getRoastBatch`, `getSurpriseRoast`, `listCategories`, `getCatalogStats`, `getHealth`, `getServiceIndex`, `getOpenApiDocument`), a description of when to use it, described parameters, and a JSON Schema for both success and error bodies.
+The OpenAPI contract is written to be turned directly into tools. This section describes v0.8.0 and later; earlier releases publish a plainer contract without `operationId` values and return shorter error messages. Every `GET` operation has a stable `operationId` (`getRoast`, `getRoastBatch`, `getSurpriseRoast`, `listCategories`, `getCatalogStats`, `getHealth`, `getServiceIndex`, `getOpenApiDocument`), a description of when to use it, described parameters, and a JSON Schema for both success and error bodies.
 
 Validation errors name the allowed values, so a client that guesses wrong can correct itself without a second lookup:
 

@@ -25,6 +25,7 @@
 23. Publish the GitHub release only after sustained convergence, the full production smoke suite, the final stability window, and any required control-plane verification all pass.
 24. Verify branch protection, repository cleanliness, release/tag signatures, open PRs, remote branches, code-scanning alerts, private vulnerability reporting, and Dependabot absence.
 25. Record the final release anchor, Worker version ID, deployment state, non-versioned configuration state, rollback anchors, production service version, and release URL.
+26. After the GitHub release is published, open a documentation pull request that updates the README `Supported release` line and example `service_version`, and the `Baseline reviewed against` version in `docs/security/BASELINE.md`, so the public documents describe the release that is actually live.
 
 The repository intentionally has no direct production `deploy` package script. Candidate upload, non-versioned control-plane synchronization, and production promotion are separate operations. V1 does not store a long-lived Cloudflare deployment credential in GitHub Actions.
 

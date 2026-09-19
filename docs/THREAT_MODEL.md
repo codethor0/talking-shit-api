@@ -27,6 +27,8 @@ Residual risk: Cloudflare Worker rate-limit counters are local to a Cloudflare l
 
 Controls: no command execution, SQL, templates, dynamic imports, filesystem, eval, or free-form content generation; strict allowlists for query keys/values.
 
+Routes that take no parameters reject any query string with `400`, so an unexpected parameter is reported instead of silently ignored.
+
 The surprise route accepts only the existing category and level allowlists. Any omitted dimension is randomized, so the route adds no free-form input surface.
 
 Residual risk: low in V1 because public input is never used in an execution context.
@@ -56,6 +58,18 @@ Controls: `pull_request` only; no `pull_request_target`; no deployment secrets i
 ### Abuse as a harassment service
 
 Controls: V1 does not accept real-person names, free-form targets, protected traits, or arbitrary text. Content is curated in repository review.
+
+### Unintended cloud cost
+
+Controls: the project runs on the Workers Free plan, where Cloudflare documents no overage billing and an exhausted allowance makes operations fail. The policy check rejects any top-level `wrangler.jsonc` key outside a reviewed allowlist, so a billable binding cannot merge by accident. `docs/security/FREE_TIER.md` catalogs each resource and its behavior at the limit. No workflow, script, or agent creates account resources.
+
+Residual risk: a maintainer can still upgrade the plan or enable a payment-backed product by hand. Confirm the plan in the Cloudflare dashboard, and treat a billing alert as a notification, not a spending cap.
+
+### Local developer tooling
+
+Controls: the agent lab under `lab/` is never imported by or deployed with the Worker (ADR 0005). It reads its API key from the environment only, never sends that key to the API under test, accepts only plain absolute OpenAPI paths, and refuses any request outside the configured base URL.
+
+Residual risk: a maintainer who points the lab at an untrusted API sends that API's responses to a model as tool results. Use the lab against the project's own API.
 
 ## Rate-limit privacy note
 

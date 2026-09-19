@@ -52,7 +52,7 @@ Live stream, needs an authenticated Wrangler on the maintainer machine:
 npx --no-install wrangler tail --config ./wrangler.jsonc --format pretty --status error
 ```
 
-`wrangler tail` shows live invocations and is not stored. Because the platform samples, not every request appears.
+`wrangler tail` shows live invocations and is not stored. Each event includes the outcome, `cpuTime`, `wallTime`, the `scriptVersion` that served it, and any console output or exceptions; for this Worker the console output and exception lists are always empty because it logs nothing. Unlike persisted Workers Logs, the real-time tail shows the full request URL including the query string, so do not send anything sensitive while tailing.
 
 For history, use the Workers Logs query builder in the Cloudflare dashboard. Filter by status code or path, and group by the `cf-ray` value you captured in step 2. Retention on the Free plan is three days.
 

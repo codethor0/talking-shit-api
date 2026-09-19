@@ -1,6 +1,6 @@
 # Security Baseline
 
-Baseline reviewed against Talking Shit API v0.6.2.
+Baseline reviewed against Talking Shit API v0.8.0.
 
 ## Runtime capability baseline
 
@@ -20,6 +20,8 @@ The production service must remain one Cloudflare Worker with:
 - request URL length capped at 2048 application characters;
 - Cloudflare native rate limiting;
 - stable non-reflecting error responses;
+- routes that take no parameters reject any query string with `400 INVALID_REQUEST`;
+- the Workers Free plan only, with every top-level `wrangler.jsonc` key on a reviewed allowlist enforced by the policy check (see `FREE_TIER.md`);
 - Workers invocation logs enabled with 25 percent head sampling;
 - Workers traces enabled with 1 percent head sampling;
 - no custom application logging or external telemetry destinations;
