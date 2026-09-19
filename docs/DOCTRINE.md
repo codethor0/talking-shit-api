@@ -44,6 +44,8 @@ Use exact dependency versions, `npm ci` in CI, immutable GitHub Action SHAs, a c
 
 Primary HTTP tests execute in Cloudflare's Workers runtime through `@cloudflare/vitest-plugin`. Pure functions are property-tested where useful. Tests cover success, invalid inputs, rate-limit failure, unsupported methods, CORS, security headers, and the API contract.
 
+Test the contract, not the implementation. Inject randomness so selection is deterministic under test. Every bug fix ships with a regression test that fails without the fix. A property that must hold for every request, such as security headers on every response or no reflection of rejected input, is asserted across generated inputs rather than a handful of examples.
+
 ## 9. No known-defect releases
 
 "Zero bugs" cannot be guaranteed honestly. The enforceable standard is: no known release-blocking defects, all gates green, and no unresolved high-severity security finding.
@@ -58,7 +60,7 @@ Public errors have stable codes and short messages. Do not return stack traces, 
 
 ## 12. Privacy by absence
 
-Do not collect what we do not need. V1 stores no user data. A client address may be read transiently to derive a one-way rate-limit key; application code does not persist or log it.
+Do not collect what we do not need. V1 stores no user data. A client address may be read transiently to derive a one-way rate-limit key; application code does not persist or log it. The only telemetry is Cloudflare's bounded, sampled, query-redacted platform observability accepted in ADR 0004.
 
 ## 13. CI is hostile infrastructure
 
@@ -76,7 +78,8 @@ An agent must never:
 - disable security checks;
 - suppress findings without rationale;
 - bypass review/release gates;
-- hide a failed command.
+- hide a failed command;
+- create, modify, or delete cloud account resources, or change account or repository settings, without an explicit instruction from the maintainer.
 
 ## 15. Human review focuses on boundaries
 
@@ -108,11 +111,31 @@ formatter/linter
 Workers type generation
 strict TypeScript
 runtime + property tests
+shell syntax check
 Wrangler dry-run build
+dependency policy
 npm security audit
 clean git diff check
 human boundary review
 ```
+
+## 21. Cost is a security property
+
+The project runs on the Workers Free plan and must not be billable. Adopt a Cloudflare resource only when its current documentation shows it is available on Free and fails, rather than bills, at its limit. Unstated or announced-but-unscheduled billing behavior counts as billable until documented otherwise.
+
+The policy check refuses any unreviewed `wrangler.jsonc` key, so a new binding cannot merge without a deliberate change to the guard. The resource catalog, worst-case usage, and adoption steps are in `docs/security/FREE_TIER.md`; the decision is ADR 0006.
+
+## 22. The contract is the product
+
+`src/openapi.ts` is the authoritative description of public behavior. Tests verify live responses against its schemas, so the document and the behavior cannot drift. Errors are stable, self-correcting, and built only from static allowlists. A change that a client can observe, including a stricter validation rule, is a contract change: it needs tests, documentation, a changelog entry that names the client impact, and a semantic version decision.
+
+## 23. Learning tools stay outside the production boundary
+
+Tooling that exists to study, exercise, or demonstrate the service, such as the agent lab, never enters the Worker bundle, never adds a production dependency, and never holds a credential in the repository. It is recorded in an ADR, linted like the rest of the code, and removable without touching production. See ADR 0005 and `docs/LEARNING.md`.
+
+## 24. Documentation is plain and current
+
+Documentation and code use plain text with no emoji, and the policy check enforces it. The policy check also fails when a document names a repository path that does not exist, links to a missing file, or points at a README anchor with no heading; the changelog is exempt as a historical record. Docs change in the same pull request as the behavior they describe. State facts with a review date when they depend on a vendor. A fact that cannot be verified is labeled as an assumption instead of written as truth.
 
 ## Reference baseline
 

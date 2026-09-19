@@ -22,7 +22,7 @@ Do not weaken, delete, or skip a test or security gate merely to make a change p
 
 ## Roast contributions
 
-Roasts belong to an existing category and level unless the API contract is intentionally changing. Keep submissions concise, original, developer-focused, and meaningfully different from existing entries.
+Open the Roast submission issue form to propose one. Roasts belong to an existing category and level unless the API contract is intentionally changing. Keep submissions concise, original, developer-focused, and meaningfully different from existing entries.
 
 Dark and profane humor is welcome. Harassment, threats, doxxing, protected-class abuse, sexual violence, encouragement of self-harm, content targeting minors, and attacks on private individuals are not.
 

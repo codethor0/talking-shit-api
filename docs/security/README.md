@@ -13,6 +13,7 @@ The project protects availability, release integrity, repository integrity, main
 - `ROLLBACK.md` defines the Cloudflare rollback procedure.
 - `AVAILABILITY.md` documents failure modes, limits, and residual availability risk.
 - `CLOUDFLARE.md` defines Cloudflare routing, account-authentication, secret, abuse, and launch-hardening controls.
+- `FREE_TIER.md` catalogs Cloudflare free-tier resources, their failure behavior at the limit, sampling headroom, and the rule for adopting a new resource.
 - `OBSERVABILITY.md` defines bounded native telemetry, sampling, free-tier limits, query workflows, and billing guardrails.
 
 ## Authority

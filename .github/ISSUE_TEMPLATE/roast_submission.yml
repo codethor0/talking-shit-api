@@ -1,0 +1,58 @@
+name: Roast submission
+description: Suggest a new curated roast for an existing category and level.
+title: "[roast] "
+labels: [enhancement, good first issue]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Roasts target situations, code, and process. They never target a person, a group, or a protected class.
+        Read the roast rules in CONTRIBUTING.md before submitting. One roast per issue.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - general
+        - code
+        - debugging
+        - deploy
+        - meetings
+        - security
+        - git
+        - oncall
+    validations:
+      required: true
+
+  - type: dropdown
+    id: level
+    attributes:
+      label: Level
+      description: mild is gentle, spicy is pointed, dark is gallows humor.
+      options:
+        - mild
+        - spicy
+        - dark
+    validations:
+      required: true
+
+  - type: textarea
+    id: text
+    attributes:
+      label: Roast text
+      description: One line, 20 to 220 characters, plain text with no emoji. It must be original and meaningfully different from existing entries.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Content rules
+      options:
+        - label: It contains no harassment, threats, doxxing, protected-class abuse, sexual violence, encouragement of self-harm, or content targeting minors or private individuals.
+          required: true
+        - label: I wrote it myself, or I take responsibility for its originality if AI assisted.
+          required: true
+        - label: I searched src/content/roasts.ts and it is not a duplicate.
+          required: true

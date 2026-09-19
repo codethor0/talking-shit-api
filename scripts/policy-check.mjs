@@ -1,5 +1,5 @@
 import { readdir, readFile } from "node:fs/promises";
-import { extname, join } from "node:path";
+import { dirname, extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = new URL("../", import.meta.url);
@@ -25,6 +25,7 @@ const observabilityGuideSource = await readFile(
   "utf8",
 );
 const releaseSource = await readFile(new URL("docs/RELEASE.md", root), "utf8");
+const freeTierSource = await readFile(new URL("docs/security/FREE_TIER.md", root), "utf8");
 const securityAuditSource = await readFile(
   new URL(".github/workflows/security-audit.yml", root),
   "utf8",
@@ -151,6 +152,62 @@ if (
   throw new Error(
     "POLICY: Analytics Engine is not an approved production observability dependency.",
   );
+}
+
+// Free-tier boundary: every top-level wrangler.jsonc key is reviewed. A new binding (KV, D1, R2,
+// AI, queues, Durable Objects, and so on) must change this allowlist and docs/security/FREE_TIER.md
+// in the same reviewed pull request. See ADR 0006.
+const reviewedWranglerKeys = new Set([
+  "$schema",
+  "name",
+  "main",
+  "compatibility_date",
+  "compatibility_flags",
+  "workers_dev",
+  "preview_urls",
+  "observability",
+  "ratelimits",
+]);
+
+function unreviewedWranglerKeys(config) {
+  return Object.keys(config).filter((key) => !reviewedWranglerKeys.has(key));
+}
+
+for (const key of [
+  "kv_namespaces",
+  "d1_databases",
+  "r2_buckets",
+  "ai",
+  "queues",
+  "durable_objects",
+  "vectorize",
+  "hyperdrive",
+  "services",
+  "browser",
+  "triggers",
+  "route",
+  "analytics_engine_datasets",
+]) {
+  if (unreviewedWranglerKeys({ name: canonicalSlug, [key]: [] }).join() !== key) {
+    throw new Error(`POLICY: free-tier allowlist regression fixture did not reject ${key}.`);
+  }
+}
+
+if (unreviewedWranglerKeys(wranglerConfig).length > 0) {
+  throw new Error(
+    `POLICY: wrangler.jsonc keys are not on the reviewed free-tier allowlist: ${unreviewedWranglerKeys(wranglerConfig).join(", ")}. See docs/security/FREE_TIER.md.`,
+  );
+}
+
+for (const fragment of [
+  "no overage billing",
+  "Confirm the plan in the Cloudflare dashboard",
+  "Adding a free resource",
+  "reviewed key to the allowlist",
+]) {
+  if (!freeTierSource.includes(fragment)) {
+    throw new Error(`POLICY: free-tier documentation must retain control: ${fragment}`);
+  }
 }
 
 for (const [name, document, fragments] of [
@@ -620,6 +677,94 @@ for (const file of await walkRepositoryText(fileURLToPath(root))) {
     throw new Error(
       `POLICY: emoji characters are forbidden in repository code and documentation: ${file}`,
     );
+  }
+}
+
+// Documentation currency: every repository path a document mentions in backticks, every relative
+// Markdown link, and every README anchor must resolve. CHANGELOG.md is a historical record and is
+// exempt because it legitimately names files that no longer exist. See DOCTRINE section 24.
+const documentedPathPattern =
+  /`((?:\.\.\/)?(?:docs|src|scripts|lab|test|\.github)\/[\w./@-]+\.[a-z]+|(?:\.\.\/)?[A-Z][A-Z_-]+\.md)`/g;
+const relativeLinkPattern = /\]\((?!https?:|mailto:|#)([^)#\s]+)(#[^)]*)?\)/g;
+
+async function walkAllFiles(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) {
+      if (!ignoredRepositoryDirectories.has(entry.name)) files.push(...(await walkAllFiles(path)));
+    } else if (entry.isFile()) {
+      files.push(path);
+    }
+  }
+  return files;
+}
+
+function brokenDocumentReferences(documentPath, source, existingFiles, rootPath) {
+  const directory = dirname(documentPath);
+  const problems = [];
+  const exists = (candidate) => existingFiles.has(resolve(candidate));
+  const bareNameExists = (name) =>
+    [...existingFiles].some((file) => file.endsWith(`${sep}${name}`) && file.startsWith(rootPath));
+
+  for (const match of source.matchAll(documentedPathPattern)) {
+    const reference = match[1];
+    if (
+      !exists(resolve(directory, reference)) &&
+      !exists(resolve(rootPath, reference)) &&
+      !bareNameExists(reference)
+    ) {
+      problems.push(`path ${reference}`);
+    }
+  }
+
+  for (const match of source.matchAll(relativeLinkPattern)) {
+    if (!exists(resolve(directory, match[1]))) problems.push(`link ${match[1]}`);
+  }
+
+  return problems;
+}
+
+const repositoryRoot = fileURLToPath(root);
+const existingFiles = new Set((await walkAllFiles(repositoryRoot)).map((file) => resolve(file)));
+
+if (
+  brokenDocumentReferences(
+    join(repositoryRoot, "docs", "fixture.md"),
+    "See `docs/definitely-missing.md` and [x](../nope/missing.md).",
+    existingFiles,
+    repositoryRoot,
+  ).length !== 2
+) {
+  throw new Error("POLICY: documentation reference regression fixture was not rejected.");
+}
+
+for (const file of await walkRepositoryText(repositoryRoot)) {
+  if (extname(file) !== ".md" || file === join(repositoryRoot, "CHANGELOG.md")) continue;
+  const problems = brokenDocumentReferences(
+    file,
+    await readFile(file, "utf8"),
+    existingFiles,
+    repositoryRoot,
+  );
+  if (problems.length > 0) {
+    throw new Error(`POLICY: broken documentation reference in ${file}: ${problems.join("; ")}`);
+  }
+}
+
+const readmeAnchors = new Set(
+  [...readmeSource.matchAll(/^#+\s+(.+)$/gm)].map((heading) =>
+    (heading[1] ?? "")
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-"),
+  ),
+);
+for (const match of readmeSource.matchAll(/(?:\]\(|href=")#([^)"]+)/g)) {
+  if (!readmeAnchors.has(match[1] ?? "")) {
+    throw new Error(`POLICY: README anchor #${match[1]} does not match any heading.`);
   }
 }
 

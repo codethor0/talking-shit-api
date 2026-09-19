@@ -9,6 +9,18 @@
   <a href="https://github.com/codethor0/talking-shit-api/releases"><img alt="Release" src="https://img.shields.io/github/v/release/codethor0/talking-shit-api?label=release"></a>
   <a href="SECURITY.md"><img alt="Security policy" src="https://img.shields.io/badge/security-policy-blue.svg"></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-green.svg"></a>
+  <img alt="Runtime dependencies: zero" src="https://img.shields.io/badge/runtime%20dependencies-0-brightgreen.svg">
+  <img alt="Runs on the Cloudflare Workers Free plan" src="https://img.shields.io/badge/Cloudflare%20Workers-Free%20plan-F38020.svg?logo=cloudflare&logoColor=white">
+  <img alt="Strict TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178C6.svg?logo=typescript&logoColor=white">
+</p>
+
+<p align="center">
+  <a href="#try-it-in-10-seconds">Try it</a> |
+  <a href="#api-at-a-glance">API</a> |
+  <a href="#for-agents-and-automated-clients">Agents</a> |
+  <a href="#study-how-an-api-call-works">Learn</a> |
+  <a href="docs/README.md">Docs</a> |
+  <a href="CONTRIBUTING.md">Contribute</a>
 </p>
 
 <p align="center">
@@ -113,6 +125,10 @@ Error messages are built only from static allowlists and never echo rejected inp
 
 To watch a model discover and call the API, see the local agent lab in `lab/README.md`.
 
+## Study how an API call works
+
+The service is small enough to follow one request end to end: client timing phases, the headers Cloudflare adds, the designed error paths, sampled server-side logs, and a Claude model calling the API as tools. Every step uses free tools and no extra Cloudflare resources. Start with `docs/LEARNING.md`.
+
 ## Intentionally boring underneath
 
 The joke is the output. The architecture is deliberately not a joke.
@@ -127,11 +143,12 @@ The joke is the output. The architecture is deliberately not a joke.
 - Strict allowlisted input validation with duplicate-parameter rejection and bounded URL length.
 - Native Cloudflare rate limiting keyed from a hashed client address.
 - `Cache-Control: no-store`, wildcard credential-free CORS, and defensive response headers.
+- Free-tier only: the policy check fails on any unreviewed `wrangler.jsonc` key, so a billable binding cannot merge by accident. See `docs/security/FREE_TIER.md`.
 - Preview URLs disabled; native Workers Logs sampled at 25% and traces sampled at 1% for bounded production observability.
 - No custom application logging or external telemetry export destinations; request query strings are redacted from platform logs and traces.
 - Signed commits, protected `main`, read-only CI, CodeQL, dependency review, private vulnerability reporting, and scheduled supply-chain verification.
 
-The architecture is documented in `docs/ARCHITECTURE.md`. The threat model is in `docs/THREAT_MODEL.md`. Operational security guidance is indexed in `docs/security/README.md`.
+Documentation is indexed in `docs/README.md`. The architecture is documented in `docs/ARCHITECTURE.md`. The threat model is in `docs/THREAT_MODEL.md`. Operational security guidance is indexed in `docs/security/README.md`.
 
 ## Security researchers
 
@@ -190,7 +207,9 @@ Canonical product naming and brand usage are documented in `docs/BRAND.md`.
 
 ## Cost model
 
-V1 is intentionally small enough for the Cloudflare Workers Free plan and a public GitHub repository. There is no paid database, API, AI model, email service, or custom domain requirement.
+The service is designed to run for free on the Cloudflare Workers Free plan and a public GitHub repository. Cloudflare documents no overage billing on Free: an exhausted allowance makes operations fail instead of costing money. There is no paid database, API, AI model, email service, or custom domain requirement.
+
+`docs/security/FREE_TIER.md` catalogs each Cloudflare resource, its free allowance, what it does at the limit, and the estimated worst-case observability usage of the current configuration, about 17.5 percent of the daily Free quota. The rule and its enforcement are in `docs/DOCTRINE.md` section 21 and ADR 0006.
 
 The current `workers.dev` hostname is an intentional hobby-project tradeoff. Cloudflare recommends a custom domain or Worker route for business-critical production workloads. See `docs/security/CLOUDFLARE.md` for the deployment and abuse-risk boundary.
 

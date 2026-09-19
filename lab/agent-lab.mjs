@@ -115,6 +115,11 @@ function describeError(error) {
 // OpenAPI -> tool definitions
 // ---------------------------------------------------------------------------
 
+// Spec paths are appended to --base-url to build each request. Accept only a plain absolute path:
+// a path beginning with "@", "//", or "\\" (or carrying "?" or "#") could otherwise turn the
+// concatenated string into a URL for a different host if the target's spec is hostile.
+const SAFE_SPEC_PATH = /^\/(?![/\\])[A-Za-z0-9._~/-]*$/;
+
 async function loadTools() {
   let response;
   try {
@@ -137,7 +142,12 @@ async function loadTools() {
   const routes = new Map();
 
   for (const [path, item] of Object.entries(spec.paths ?? {})) {
-    const operation = item.get;
+    if (!SAFE_SPEC_PATH.test(path)) {
+      fail(
+        `refusing ${baseUrl}/openapi.json: path ${JSON.stringify(path)} is not a plain absolute path.`,
+      );
+    }
+    const operation = item?.get;
     if (!operation?.operationId) continue;
 
     const properties = {};
@@ -181,6 +191,10 @@ async function executeTool(routes, name, input) {
   }
 
   const url = new URL(`${baseUrl}${route.path}`);
+  // Defense in depth behind SAFE_SPEC_PATH: a request may never leave the configured base URL.
+  if (url.origin !== new URL(baseUrl).origin) {
+    return { isError: true, content: "Refused: the request would leave the configured base URL." };
+  }
   for (const [key, value] of Object.entries(input ?? {})) {
     if (value === undefined || value === null) continue;
     // Pass through exactly what the model chose, including invalid keys, so the
