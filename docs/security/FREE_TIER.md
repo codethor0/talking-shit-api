@@ -59,6 +59,37 @@ Headroom is large. Even at 100 percent log sampling the worst case is about 110,
 
 The Free plan allows 10 ms of CPU per invocation. A live `wrangler tail` of production v0.7.0 on 2026-09-18 recorded `cpuTime` of 0 to 1 ms and `wallTime` of 1 to 2 ms for four requests covering a success, a validation error, and a 404. This is a small sample at whole-millisecond resolution, so read it as an order of magnitude, roughly a tenfold margin, not as a guarantee. Re-measure after a release that changes request handling.
 
+## Verify the account matches the boundary
+
+These read-only commands check that the account holds nothing beyond the one Worker and its rate-limit binding. Run them from a maintainer machine with an authenticated Wrangler.
+
+```bash
+npx --no-install wrangler kv namespace list
+npx --no-install wrangler d1 list --json
+npx --no-install wrangler r2 bucket list
+npx --no-install wrangler queues list
+npx --no-install wrangler vectorize list
+npx --no-install wrangler hyperdrive list
+npx --no-install wrangler secrets-store store list --remote
+npx --no-install wrangler secret list --config ./wrangler.jsonc --format json
+npx --no-install wrangler versions view "$LIVE_VERSION_ID" --config ./wrangler.jsonc --json
+```
+
+Expected results:
+
+| Command | Expected |
+| --- | --- |
+| `kv namespace list`, `d1 list` | `[]` |
+| `r2 bucket list` | An error saying R2 is not enabled (code 10042). Enabling R2 is a billable-risk decision, see the catalog above |
+| `queues list`, `hyperdrive list`, `vectorize list` | No entries |
+| `secrets-store store list --remote` | No stores |
+| `secret list` | `[]` |
+| `versions view` | A single `ratelimit` binding named `RATE_LIMITER`, a `fetch` handler, and the compatibility date and flags from `wrangler.jsonc` |
+
+Last verified 2026-09-18 against production v0.7.0: every result matched.
+
+Two facts cannot be read with Wrangler and need the Cloudflare dashboard: the plan (Workers and Pages, then Plans, must read Free) and the live non-versioned observability settings (the Worker's Observability settings must show the sampling rates in `wrangler.jsonc`). Record both when a release changes them.
+
 ## Adding a free resource
 
 A new binding is a one-way door under DOCTRINE section 18. Before the change:

@@ -112,6 +112,7 @@ Before a public launch:
 - Local Wrangler OAuth credentials are stored through macOS Keychain or an equivalently protected mechanism.
 - No Global API Key is exposed in shell configuration, repository files, CI, or logs.
 - Worker secret list is empty.
+- The account holds no other resources; see the audit in `FREE_TIER.md`, and confirm the plan reads Free in the dashboard.
 - Preview URLs remain disabled.
 - Workers Logs remain enabled at 25 percent head sampling and traces remain enabled at 1 percent head sampling.
 - No custom application logging or external telemetry destination is present.
